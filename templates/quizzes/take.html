@@ -1,0 +1,190 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ quiz.title }} - Quiz - BopheloHub{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Quiz Header -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body text-center py-5">
+                    <h1 class="display-6 fw-bold mb-3">
+                        <i class="bi bi-question-circle text-primary me-2"></i>{{ quiz.title }}
+                    </h1>
+                    <p class="text-muted lead">
+                        Pass mark: <strong>{{ quiz.pass_percentage }}%</strong> | 
+                        Questions: <strong>{{ quiz.questions.count }}</strong>
+                    </p>
+                    
+                    {% if passed_attempt %}
+                        <div class="alert alert-success d-inline-block mt-3">
+                            <i class="bi bi-check-circle-fill me-2"></i>
+                            You have already passed this quiz! (Score: {{ passed_attempt.score }}%)
+                        </div>
+                    {% elif best_score %}
+                        <div class="alert alert-info d-inline-block mt-3">
+                            <i class="bi bi-info-circle-fill me-2"></i>
+                            Your best score: {{ best_score|floatformat:1 }}%
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Previous Attempts -->
+            {% if attempts %}
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body">
+                        <h5 class="fw-bold mb-3"><i class="bi bi-clock-history me-2"></i>Previous Attempts</h5>
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Score</th>
+                                        <th>Result</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for attempt in attempts %}
+                                        <tr>
+                                            <td>{{ attempt.attempted_at|date:"M d, Y H:i" }}</td>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <div class="progress flex-grow-1 me-2" style="height: 8px;">
+                                                        <div class="progress-bar {% if attempt.passed %}bg-success{% else %}bg-danger{% endif %}" 
+                                                            role="progressbar" style="width: {{ attempt.score }}%;">
+                                                        </div>
+                                                    </div>
+                                                    <span class="fw-semibold">{{ attempt.score|floatformat:1 }}%</span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                {% if attempt.passed %}
+                                                    <span class="badge bg-success"><i class="bi bi-check me-1"></i>Passed</span>
+                                                {% else %}
+                                                    <span class="badge bg-danger"><i class="bi bi-x me-1"></i>Failed</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Quiz Form -->
+            {% if not passed_attempt %}
+                <div class="quiz-container card border-0 shadow-lg">
+                    <div class="card-body p-4">
+                        <form method="post" id="quizForm">
+                            {% csrf_token %}
+                            
+                            {% for question in quiz.questions.all %}
+                                <div class="quiz-question mb-4" data-question="{{ forloop.counter }}">
+                                    <div class="d-flex justify-content-between align-items-start mb-3">
+                                        <h5 class="fw-semibold mb-0">
+                                            <span class="badge bg-primary me-2">{{ forloop.counter }}</span>
+                                            {{ question.text }}
+                                        </h5>
+                                    </div>
+                                    
+                                    <div class="quiz-options">
+                                        {% for choice in question.choices.all %}
+                                            <label class="quiz-option d-block">
+                                                <input type="radio" name="question_{{ question.pk }}" value="{{ choice.pk }}" class="d-none" required>
+                                                <div class="d-flex align-items-center">
+                                                    <span class="badge bg-secondary me-3">{% if forloop.counter0 == 0 %}A{% elif forloop.counter0 == 1 %}B{% elif forloop.counter0 == 2 %}C{% elif forloop.counter0 == 3 %}D{% else %}{{ forloop.counter }}{% endif %}</span>
+                                                    <span>{{ choice.text }}</span>
+                                                </div>
+                                            </label>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                            
+                            <div class="d-grid gap-2 mt-4">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="bi bi-check-circle me-2"></i>Submit Answers
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <div class="mb-4">
+                        <i class="bi bi-trophy text-warning" style="font-size: 5rem;"></i>
+                    </div>
+                    <h3 class="fw-bold mb-3">Quiz Already Completed!</h3>
+                    <p class="text-muted mb-4">You have already passed this quiz. Great work!</p>
+                    <a href="{% url 'lesson_play' quiz.lesson.pk %}" class="btn btn-primary">
+                        <i class="bi bi-arrow-left me-1"></i>Back to Lesson
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    .quiz-option {
+        padding: 1rem;
+        margin: 0.5rem 0;
+        background-color: #f8f9fa;
+        border: 2px solid #e9ecef;
+        border-radius: 0.5rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .quiz-option:hover {
+        border-color: #4e73df;
+        background-color: rgba(78, 115, 223, 0.05);
+    }
+    
+    .quiz-option input:checked + div {
+        color: #4e73df;
+        font-weight: 600;
+    }
+    
+    .quiz-option:has(input:checked) {
+        border-color: #4e73df;
+        background-color: rgba(78, 115, 223, 0.1);
+    }
+    
+    .question-number {
+        width: 30px;
+        height: 30px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #4e73df;
+        color: white;
+        border-radius: 50%;
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+</style>
+
+<script>
+    // Add confirmation before submitting
+    document.getElementById('quizForm').addEventListener('submit', function(e) {
+        // Check if all questions are answered
+        const questions = {{ quiz.questions.count }};
+        const answered = document.querySelectorAll('input[type="radio"]:checked').length;
+        
+        if (answered < questions) {
+            if (!confirm(`You have answered ${answered} out of ${questions} questions. Are you sure you want to submit?`)) {
+                e.preventDefault();
+            }
+        } else {
+            if (!confirm('Are you sure you want to submit your answers?')) {
+                e.preventDefault();
+            }
+        }
+    });
+</script>
+{% endblock %}

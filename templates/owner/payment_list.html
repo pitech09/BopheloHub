@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Payment Management - LearnHub{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="fw-bold mb-1"><i class="bi bi-cash-stack me-2"></i>Payment Management</h1>
+            <p class="text-secondary mb-0">Review, verify, or reject payment submissions</p>
+        </div>
+        <a href="{% url 'owner_dashboard' %}" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-left me-1"></i>Dashboard
+        </a>
+    </div>
+
+    <!-- Status Filters -->
+    <div class="d-flex flex-wrap gap-2 mb-4">
+        <a href="{% url 'owner_payment_list' %}" class="btn btn-sm rounded-pill {% if not current_status %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+            All <span class="badge bg-light text-dark ms-1">{{ total_count }}</span>
+        </a>
+        <a href="{% url 'owner_payment_list' %}?status=pending" class="btn btn-sm rounded-pill {% if current_status == 'pending' %}btn-warning{% else %}btn-outline-secondary{% endif %}">
+            <i class="bi bi-clock me-1"></i>Pending <span class="badge bg-light text-dark ms-1">{{ pending_count }}</span>
+        </a>
+        <a href="{% url 'owner_payment_list' %}?status=verified" class="btn btn-sm rounded-pill {% if current_status == 'verified' %}btn-success{% else %}btn-outline-secondary{% endif %}">
+            <i class="bi bi-check-circle me-1"></i>Verified <span class="badge bg-light text-dark ms-1">{{ verified_count }}</span>
+        </a>
+        <a href="{% url 'owner_payment_list' %}?status=rejected" class="btn btn-sm rounded-pill {% if current_status == 'rejected' %}btn-danger{% else %}btn-outline-secondary{% endif %}">
+            <i class="bi bi-x-circle me-1"></i>Rejected <span class="badge bg-light text-dark ms-1">{{ rejected_count }}</span>
+        </a>
+    </div>
+
+    <!-- Search -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <form method="get" class="d-flex gap-2">
+                <input type="text" name="q" class="form-control apple-input" placeholder="Search by reference, email, or course..." value="{{ search_query }}">
+                <button type="submit" class="btn btn-primary rounded-pill"><i class="bi bi-search"></i></button>
+                {% if current_status %}
+                <input type="hidden" name="status" value="{{ current_status }}">
+                {% endif %}
+            </form>
+        </div>
+    </div>
+
+    <!-- Payments Table -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            {% if payments %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Reference</th>
+                            <th>User</th>
+                            <th>Course</th>
+                            <th class="text-end">Amount</th>
+                            <th>Screenshot</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for payment in payments %}
+                        <tr>
+                            <td class="fw-semibold small">{{ payment.reference_number }}</td>
+                            <td>
+                                <div class="small fw-semibold">{{ payment.user.get_full_name|default:payment.user.username }}</div>
+                                <div class="small text-secondary">{{ payment.user.email }}</div>
+                            </td>
+                            <td class="small">{{ payment.course.title|truncatechars:40 }}</td>
+                            <td class="text-end fw-semibold">M{{ payment.amount|floatformat:2 }}</td>
+                            <td>
+                                {% if payment.screenshot %}
+                                <a href="{{ payment.screenshot.url }}" target="_blank" class="btn btn-sm btn-outline-secondary rounded-pill">
+                                    <i class="bi bi-image me-1"></i>View
+                                </a>
+                                {% else %}
+                                <span class="text-secondary small">—</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge {% if payment.status == 'verified' %}bg-success{% elif payment.status == 'pending' %}bg-warning text-dark{% else %}bg-danger{% endif %}">
+                                    {{ payment.get_status_display }}
+                                </span>
+                                {% if payment.verified_by %}
+                                <div class="small text-secondary mt-1">by {{ payment.verified_by.get_full_name|default:payment.verified_by.username }}</div>
+                                {% endif %}
+                            </td>
+                            <td class="small text-secondary">
+                                <div>{{ payment.paid_at|date:"M d, Y" }}</div>
+                                {% if payment.verified_at %}
+                                <div>Verified: {{ payment.verified_at|date:"M d" }}</div>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                {% if payment.status == 'pending' %}
+                                <div class="d-flex gap-1 justify-content-end">
+                                    <a href="{% url 'owner_payment_verify' payment.pk %}" class="btn btn-sm btn-success rounded-pill">
+                                        <i class="bi bi-check-lg"></i>
+                                    </a>
+                                    <a href="{% url 'owner_payment_reject' payment.pk %}" class="btn btn-sm btn-outline-danger rounded-pill">
+                                        <i class="bi bi-x-lg"></i>
+                                    </a>
+                                </div>
+                                {% else %}
+                                <span class="text-secondary small">—</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if is_paginated %}
+            <div class="d-flex justify-content-center py-3">
+                <nav>
+                    <ul class="pagination pagination-sm mb-0">
+                        {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}">Previous</a>
+                        </li>
+                        {% endif %}
+                        <li class="page-item disabled">
+                            <span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                        </li>
+                        {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}">Next</a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+            {% endif %}
+
+            {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-cash-stack display-4 text-secondary mb-3 d-block"></i>
+                <p class="text-secondary mb-0">No payments found.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

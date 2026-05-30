@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+{% load notification_extras %}
+
+{% block title %}Notifications - LearnHub{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="fw-bold mb-1"><i class="bi bi-bell me-2"></i>Notifications</h1>
+            <p class="text-muted mb-0">Stay updated with your learning activity</p>
+        </div>
+        {% if unread_count > 0 %}
+            <a href="{% url 'notification_mark_all_read' %}" class="btn btn-outline-primary">
+                <i class="bi bi-check-all me-1"></i>Mark all as read
+            </a>
+        {% endif %}
+    </div>
+
+    <!-- Notification Stats -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="stat-value">{{ page_obj.paginator.count }}</div>
+                        <div class="stat-label">Total</div>
+                    </div>
+                    <i class="bi bi-bell text-primary" style="font-size: 2rem;"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card warning">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="stat-value">{{ unread_count }}</div>
+                        <div class="stat-label">Unread</div>
+                    </div>
+                    <i class="bi bi-envelope text-warning" style="font-size: 2rem;"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card success">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="stat-value">{{ page_obj.paginator.count|add:unread_count|neg }}</div>
+                        <div class="stat-label">Read</div>
+                    </div>
+                    <i class="bi bi-check-circle text-success" style="font-size: 2rem;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notifications List -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            {% if notifications %}
+                <div class="list-group list-group-flush">
+                    {% for notification in notifications %}
+                        <a href="{% url 'notification_mark_read' notification.pk %}?next={{ request.path }}" 
+                           class="list-group-item list-group-item-action notification-item {% if not notification.is_read %}unread{% endif %} p-3">
+                            <div class="d-flex w-100 justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <div class="d-flex align-items-center">
+                                        {% if 'enrolled' in notification.message|lower or 'completed' in notification.message|lower %}
+                                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                        {% elif 'quiz' in notification.message|lower %}
+                                            <i class="bi bi-question-circle-fill text-warning me-2"></i>
+                                        {% elif 'certificate' in notification.message|lower %}
+                                            <i class="bi bi-award-fill text-info me-2"></i>
+                                        {% else %}
+                                            <i class="bi bi-bell-fill text-primary me-2"></i>
+                                        {% endif %}
+                                        <p class="mb-0">{{ notification.message }}</p>
+                                    </div>
+                                </div>
+                                <small class="text-muted ms-2">{{ notification.created_at|timesince }} ago</small>
+                            </div>
+                        </a>
+                    {% endfor %}
+                </div>
+
+                <!-- Pagination -->
+                {% if page_obj.paginator.num_pages > 1 %}
+                    <div class="p-3">
+                        <nav aria-label="Notification pagination">
+                            <ul class="pagination justify-content-center mb-0">
+                                {% if page_obj.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page=1">
+                                            <i class="bi bi-chevron-double-left"></i>
+                                        </a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
+                                            <i class="bi bi-chevron-left"></i>
+                                        </a>
+                                    </li>
+                                {% endif %}
+
+                                {% for num in page_obj.paginator.page_range %}
+                                    {% if page_obj.number == num %}
+                                        <li class="page-item active" aria-current="page">
+                                            <span class="page-link">{{ num }}</span>
+                                        </li>
+                                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+
+                                {% if page_obj.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">
+                                            <i class="bi bi-chevron-right"></i>
+                                        </a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">
+                                            <i class="bi bi-chevron-double-right"></i>
+                                        </a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    </div>
+                {% endif %}
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-bell-slash text-muted" style="font-size: 4rem;"></i>
+                    <h4 class="mt-3">No notifications yet</h4>
+                    <p class="text-muted">You're all caught up! New notifications will appear here.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

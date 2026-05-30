@@ -1,0 +1,933 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Platform Dashboard - LearnHub{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="fw-bold mb-1"><i class="bi bi-speedometer2 me-2"></i>Platform Dashboard</h1>
+            <p class="text-secondary mb-0">Full system oversight — users, courses, payments, enrollments & analytics</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'owner_system_health' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-heart-pulse me-1"></i>System Health
+            </a>
+            <a href="{% url 'admin:index' %}" class="btn btn-outline-primary">
+                <i class="bi bi-gear me-1"></i>Django Admin
+            </a>
+        </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <ul class="nav nav-tabs nav-fill mb-4 border-0">
+        <li class="nav-item">
+            <a class="nav-link active fw-semibold" href="#overview" data-bs-toggle="tab">
+                <i class="bi bi-grid-3x3-gap-fill me-1"></i>Overview
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link fw-semibold" href="#payments" data-bs-toggle="tab">
+                <i class="bi bi-cash-stack me-1"></i>Payments
+                {% if pending_payments_count > 0 %}
+                <span class="badge bg-warning text-dark ms-1">{{ pending_payments_count }}</span>
+                {% endif %}
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link fw-semibold" href="#users" data-bs-toggle="tab">
+                <i class="bi bi-people me-1"></i>Users
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link fw-semibold" href="#courses" data-bs-toggle="tab">
+                <i class="bi bi-book me-1"></i>Courses
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link fw-semibold" href="#enrollments" data-bs-toggle="tab">
+                <i class="bi bi-person-video3 me-1"></i>Enrollments
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link fw-semibold" href="#instructors" data-bs-toggle="tab">
+                <i class="bi bi-person-badge me-1"></i>Instructors
+                {% if pending_instructor_count > 0 %}
+                <span class="badge bg-warning text-dark ms-1">{{ pending_instructor_count }}</span>
+                {% endif %}
+            </a>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+        <!-- ==================== OVERVIEW TAB ==================== -->
+        <div class="tab-pane fade show active" id="overview">
+            <!-- Financial Stats Row -->
+            <div class="row g-4 mb-4">
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-label">Total Revenue (Gross)</div>
+                        <div class="stat-value">M{{ total_revenue|floatformat:2|intcomma }}</div>
+                        <small class="text-secondary">From {{ total_payments }} verified payments</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-label">Platform Fee (15%)</div>
+                        <div class="stat-value" style="color: var(--primary);">M{{ platform_fee|floatformat:2|intcomma }}</div>
+                        <small class="text-secondary">15% of total revenue</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-label">Instructor Payouts</div>
+                        <div class="stat-value" style="color: #34c759;">M{{ instructor_payouts|floatformat:2|intcomma }}</div>
+                        <small class="text-secondary">85% paid to instructors</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-label">Pending Verification</div>
+                        <div class="stat-value" style="color: #ff9f0a;">M{{ pending_revenue|floatformat:2|intcomma }}</div>
+                        <small class="text-secondary">{{ pending_payments_count }} payments pending</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Growth Metrics Row -->
+            <div class="row g-4 mb-4">
+                <div class="col-md-6">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <h5 class="fw-bold mb-3"><i class="bi bi-graph-up-arrow me-2"></i>Growth This Month</h5>
+                            <div class="row g-3">
+                                <div class="col-6">
+                                    <div class="text-center p-3 bg-light rounded-3">
+                                        <div class="h4 fw-bold mb-1" style="color: var(--primary);">+{{ new_users_this_month }}</div>
+                                        <small class="text-secondary">New Users</small>
+                                        <span class="badge bg-success ms-1">{{ user_growth_pct }}%</span>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="text-center p-3 bg-light rounded-3">
+                                        <div class="h4 fw-bold mb-1" style="color: var(--primary);">+{{ new_courses_this_month }}</div>
+                                        <small class="text-secondary">New Courses</small>
+                                        <span class="badge bg-success ms-1">{{ course_growth_pct }}%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <h5 class="fw-bold mb-3"><i class="bi bi-archive me-2"></i>Revenue by Category</h5>
+                            {% if category_revenue %}
+                            <div class="d-flex flex-wrap gap-2">
+                                {% for cat in category_revenue %}
+                                <span class="badge bg-light text-dark border px-3 py-2">
+                                    {{ cat.name }}: <strong>M{{ cat.revenue|floatformat:0|intcomma }}</strong>
+                                </span>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <p class="text-secondary mb-0">No category revenue data yet.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4 mb-4">
+                <!-- Monthly Breakdown -->
+                <div class="col-md-6">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <h5 class="fw-bold mb-3"><i class="bi bi-bar-chart me-2"></i>Monthly Revenue</h5>
+                            {% if monthly_data %}
+                            <div class="table-responsive">
+                                <table class="table table-borderless align-middle mb-0">
+                                    <thead class="text-secondary small">
+                                        <tr>
+                                            <th>Month</th>
+                                            <th class="text-end">Payments</th>
+                                            <th class="text-end">Revenue</th>
+                                            <th class="text-end">Fee (15%)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for month in monthly_data %}
+                                        <tr>
+                                            <td class="fw-semibold">{{ month.label }}</td>
+                                            <td class="text-end">{{ month.count }}</td>
+                                            <td class="text-end fw-semibold">M{{ month.revenue|floatformat:2|intcomma }}</td>
+                                            <td class="text-end" style="color: var(--primary);">M{{ month.fee|floatformat:2|intcomma }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <p class="text-secondary text-center py-4 mb-0">No payment data yet.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Instructor Requests -->
+                <div class="col-md-6">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="fw-bold mb-0"><i class="bi bi-person-check me-2"></i>Instructor Requests</h5>
+                                <a href="{% url 'owner_instructor_list' %}" class="btn btn-sm btn-outline-primary rounded-pill">
+                                    View All <i class="bi bi-arrow-right ms-1"></i>
+                                </a>
+                            </div>
+                            {% if pending_instructors %}
+                            <div class="list-group list-group-flush">
+                                {% for profile in pending_instructors %}
+                                <div class="list-group-item px-0 py-3 border-bottom">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <div class="fw-semibold">{{ profile.user.get_full_name|default:profile.user.username }}</div>
+                                            <div class="small text-secondary">{{ profile.user.email }}</div>
+                                            {% if profile.headline %}
+                                            <div class="small text-secondary">{{ profile.headline }}</div>
+                                            {% endif %}
+                                            {% if profile.qualifications %}
+                                            <div class="small mt-1">
+                                                <span class="text-secondary">Qualifications:</span>
+                                                <span class="text-muted">{{ profile.qualifications|truncatechars:100 }}</span>
+                                            </div>
+                                            {% endif %}
+                                            <div class="small text-secondary mt-1">
+                                                Applied: {{ profile.user.date_joined|date:"M d, Y" }}
+                                            </div>
+                                        </div>
+                                        <div class="d-flex gap-2 ms-3 flex-shrink-0">
+                                            <a href="{% url 'approve_instructor' profile.pk %}" class="btn btn-sm btn-primary rounded-pill">
+                                                <i class="bi bi-check-lg me-1"></i>Approve
+                                            </a>
+                                            <a href="{% url 'reject_instructor' profile.pk %}" class="btn btn-sm btn-outline-danger rounded-pill">
+                                                <i class="bi bi-x-lg me-1"></i>Reject
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <p class="text-secondary text-center py-4 mb-0">No pending instructor applications.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Platform Metrics Row -->
+            <div class="row g-4 mb-4">
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <h5 class="fw-bold mb-4"><i class="bi bi-graph-up me-2"></i>Platform Metrics</h5>
+                            <div class="row g-3">
+                                <div class="col-md-3 col-6">
+                                    <div class="text-center p-3 bg-light rounded-3">
+                                        <div class="h4 fw-bold mb-1" style="color: var(--primary);">{{ total_users }}</div>
+                                        <small class="text-secondary">Total Users</small>
+                                        <span class="d-block small text-muted">{{ total_students }} students, {{ total_instructors }} instructors</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div class="text-center p-3 bg-light rounded-3">
+                                        <div class="h4 fw-bold mb-1" style="color: var(--primary);">{{ total_courses }}</div>
+                                        <small class="text-secondary">Total Courses</small>
+                                        <span class="d-block small text-muted">{{ published_courses }} published, {{ draft_courses }} drafts</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div class="text-center p-3 bg-light rounded-3">
+                                        <div class="h4 fw-bold mb-1" style="color: var(--primary);">{{ total_enrollments }}</div>
+                                        <small class="text-secondary">Total Enrollments</small>
+                                        <span class="d-block small text-muted">{{ active_enrollments }} active, {{ pending_enrollments }} pending</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div class="text-center p-3 bg-light rounded-3">
+                                        <div class="h4 fw-bold mb-1" style="color: var(--primary);">{{ total_lessons }}</div>
+                                        <small class="text-secondary">Lessons</small>
+                                        <span class="d-block small text-muted">{{ total_categories }} categories</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div class="text-center p-3 bg-light rounded-3">
+                                        <div class="h4 fw-bold mb-1" style="color: var(--primary);">{{ total_reviews }}</div>
+                                        <small class="text-secondary">Reviews</small>
+                                        <span class="d-block small text-muted">Avg {{ avg_rating }} / 5 stars</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div class="text-center p-3 bg-light rounded-3">
+                                        <div class="h4 fw-bold mb-1" style="color: var(--primary);">{{ total_certificates }}</div>
+                                        <small class="text-secondary">Certificates Issued</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div class="text-center p-3 bg-light rounded-3">
+                                        <div class="h4 fw-bold mb-1" style="color: var(--primary);">{{ total_assessments }}</div>
+                                        <small class="text-secondary">Assessments</small>
+                                        <span class="d-block small text-muted">{{ pending_submissions }} ungraded</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div class="text-center p-3 bg-light rounded-3">
+                                        <div class="h4 fw-bold mb-1" style="color: var(--primary);">{{ total_quiz_attempts }}</div>
+                                        <small class="text-secondary">Quiz Attempts</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Courses & Recent Activity Row -->
+            <div class="row g-4 mb-4">
+                <!-- Top Courses by Revenue -->
+                <div class="col-md-6">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <h5 class="fw-bold mb-3"><i class="bi bi-trophy me-2"></i>Top Courses by Revenue</h5>
+                            {% if top_courses %}
+                            <div class="table-responsive">
+                                <table class="table table-borderless align-middle mb-0">
+                                    <thead class="text-secondary small">
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Course</th>
+                                            <th class="text-end">Revenue</th>
+                                            <th class="text-end">Fee</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for course in top_courses %}
+                                        <tr>
+                                            <td class="text-secondary">{{ forloop.counter }}</td>
+                                            <td class="fw-semibold">
+                                                <a href="{% url 'course_detail' course.slug %}" class="text-decoration-none">{{ course.title|truncatechars:35 }}</a>
+                                                <div class="small text-secondary">{{ course.enrolled_count }} enrolled</div>
+                                            </td>
+                                            <td class="text-end fw-semibold">M{{ course.revenue|floatformat:2|intcomma }}</td>
+                                            <td class="text-end" style="color: var(--primary);">M{{ course.fee|floatformat:2|intcomma }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="text-center mt-3">
+                                <a href="{% url 'owner_course_list' %}" class="btn btn-sm btn-outline-primary rounded-pill">Manage Courses</a>
+                            </div>
+                            {% else %}
+                            <p class="text-secondary text-center py-4 mb-0">No course revenue data yet.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="col-md-6">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <h5 class="fw-bold mb-3"><i class="bi bi-activity me-2"></i>Recent Activity</h5>
+                            <ul class="nav nav-tabs nav-fill mb-3 border-0" role="tablist">
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link active small" data-bs-toggle="tab" data-bs-target="#recent-users" type="button">Users</button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link small" data-bs-toggle="tab" data-bs-target="#recent-courses" type="button">Courses</button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link small" data-bs-toggle="tab" data-bs-target="#recent-payments" type="button">Payments</button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link small" data-bs-toggle="tab" data-bs-target="#recent-reviews" type="button">Reviews</button>
+                                </li>
+                            </ul>
+                            <div class="tab-content">
+                                <div class="tab-pane fade show active" id="recent-users">
+                                    <div class="list-group list-group-flush">
+                                        {% for u in recent_users %}
+                                        <div class="list-group-item px-0 py-2 border-bottom">
+                                            <div class="d-flex align-items-center">
+                                                <div class="avatar bg-primary text-white d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px; border-radius: 50%; font-size: 14px;">
+                                                    {{ u.get_full_name|first|upper|default:u.username|first|upper }}
+                                                </div>
+                                                <div>
+                                                    <div class="small fw-semibold">{{ u.get_full_name|default:u.username }}</div>
+                                                    <div class="small text-secondary">{{ u.email }} — {{ u.date_joined|timesince }} ago</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% empty %}
+                                        <p class="text-secondary text-center py-3 mb-0">No users yet.</p>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                <div class="tab-pane fade" id="recent-courses">
+                                    <div class="list-group list-group-flush">
+                                        {% for c in recent_courses %}
+                                        <div class="list-group-item px-0 py-2 border-bottom">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <div class="small fw-semibold">{{ c.title|truncatechars:40 }}</div>
+                                                    <div class="small text-secondary">by {{ c.instructor.get_full_name|default:c.instructor.username }}</div>
+                                                </div>
+                                                <span class="badge {% if c.is_published %}bg-success{% else %}bg-secondary{% endif %}">
+                                                    {{ c.is_published|yesno:"Published,Draft" }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        {% empty %}
+                                        <p class="text-secondary text-center py-3 mb-0">No courses yet.</p>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                <div class="tab-pane fade" id="recent-payments">
+                                    <div class="list-group list-group-flush">
+                                        {% for p in recent_payments %}
+                                        <div class="list-group-item px-0 py-2 border-bottom">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <div class="small fw-semibold">{{ p.reference_number }}</div>
+                                                    <div class="small text-secondary">{{ p.user.email }} — {{ p.course.title|truncatechars:25 }}</div>
+                                                </div>
+                                                <div class="text-end">
+                                                    <div class="small fw-semibold">M{{ p.amount|floatformat:2 }}</div>
+                                                    <span class="badge {% if p.status == 'verified' %}bg-success{% elif p.status == 'pending' %}bg-warning text-dark{% else %}bg-danger{% endif %}">
+                                                        {{ p.get_status_display }}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% empty %}
+                                        <p class="text-secondary text-center py-3 mb-0">No payments yet.</p>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                <div class="tab-pane fade" id="recent-reviews">
+                                    <div class="list-group list-group-flush">
+                                        {% for r in recent_reviews %}
+                                        <div class="list-group-item px-0 py-2 border-bottom">
+                                            <div class="small fw-semibold">{{ r.course.title|truncatechars:40 }}</div>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <span class="small" style="color: #ff9f0a;">
+                                                    {% for i in "12345" %}
+                                                        {% if forloop.counter <= r.rating %}
+                                                        <i class="bi bi-star-fill"></i>
+                                                        {% else %}
+                                                        <i class="bi bi-star"></i>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                </span>
+                                                <span class="small text-secondary">by {{ r.user.get_full_name|default:r.user.username }}</span>
+                                                <span class="small text-secondary">{{ r.created_at|timesince }} ago</span>
+                                            </div>
+                                            {% if r.comment %}
+                                            <div class="small text-muted mt-1">{{ r.comment|truncatechars:80 }}</div>
+                                            {% endif %}
+                                        </div>
+                                        {% empty %}
+                                        <p class="text-secondary text-center py-3 mb-0">No reviews yet.</p>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Rated & Most Enrolled Courses -->
+            <div class="row g-4 mb-4">
+                <div class="col-md-6">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <h5 class="fw-bold mb-3"><i class="bi bi-star me-2"></i>Top Rated Courses</h5>
+                            {% if top_rated_courses %}
+                            <div class="list-group list-group-flush">
+                                {% for c in top_rated_courses %}
+                                <div class="list-group-item px-0 py-2 border-bottom">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <div class="small fw-semibold">{{ c.title|truncatechars:45 }}</div>
+                                            <div class="small text-secondary">
+                                                <span style="color: #ff9f0a;">
+                                                    {% for i in "12345" %}
+                                                        {% if forloop.counter <= c.avg_rating|floatformat:"0" %}
+                                                        <i class="bi bi-star-fill"></i>
+                                                        {% else %}
+                                                        <i class="bi bi-star"></i>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                </span>
+                                                {{ c.avg_rating|floatformat:1 }} ({{ c.review_count }} reviews)
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <p class="text-secondary text-center py-4 mb-0">No rated courses yet.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <h5 class="fw-bold mb-3"><i class="bi bi-people me-2"></i>Most Enrolled Courses</h5>
+                            {% if most_enrolled_courses %}
+                            <div class="list-group list-group-flush">
+                                {% for c in most_enrolled_courses %}
+                                <div class="list-group-item px-0 py-2 border-bottom">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <div class="small fw-semibold">{{ c.title|truncatechars:45 }}</div>
+                                            <div class="small text-secondary">by {{ c.instructor.get_full_name|default:c.instructor.username }}</div>
+                                        </div>
+                                        <span class="badge bg-primary rounded-pill">{{ c.enrolled_count }} enrolled</span>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <p class="text-secondary text-center py-4 mb-0">No enrollments yet.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== PAYMENTS TAB ==================== -->
+        <div class="tab-pane fade" id="payments">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold mb-0"><i class="bi bi-cash-stack me-2"></i>Payment Management</h5>
+                        <a href="{% url 'owner_payment_list' %}" class="btn btn-primary rounded-pill">
+                            <i class="bi bi-arrow-right me-1"></i>Full Payment List
+                        </a>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-3 col-6">
+                            <div class="text-center p-3 bg-warning bg-opacity-10 rounded-3">
+                                <div class="h4 fw-bold mb-1" style="color: #ff9f0a;">{{ pending_payments_count }}</div>
+                                <small class="text-secondary">Pending</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <div class="text-center p-3 bg-success bg-opacity-10 rounded-3">
+                                <div class="h4 fw-bold mb-1" style="color: #34c759;">{{ total_payments }}</div>
+                                <small class="text-secondary">Verified</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="text-center p-3 bg-primary bg-opacity-10 rounded-3">
+                                <div class="h4 fw-bold mb-1" style="color: var(--primary);">M{{ total_revenue|floatformat:2|intcomma }}</div>
+                                <small class="text-secondary">Total Verified Revenue</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% if recent_payments %}
+                    <div class="table-responsive">
+                        <table class="table table-borderless align-middle mb-0">
+                            <thead class="text-secondary small">
+                                <tr>
+                                    <th>Reference</th>
+                                    <th>User</th>
+                                    <th>Course</th>
+                                    <th class="text-end">Amount</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for p in recent_payments %}
+                                <tr>
+                                    <td class="small">{{ p.reference_number|truncatechars:20 }}</td>
+                                    <td class="small">{{ p.user.email|truncatechars:25 }}</td>
+                                    <td class="small">{{ p.course.title|truncatechars:30 }}</td>
+                                    <td class="text-end fw-semibold">M{{ p.amount|floatformat:2 }}</td>
+                                    <td>
+                                        <span class="badge {% if p.status == 'verified' %}bg-success{% elif p.status == 'pending' %}bg-warning text-dark{% else %}bg-danger{% endif %}">
+                                            {{ p.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td class="small text-secondary">{{ p.paid_at|date:"M d, Y" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-secondary text-center py-4 mb-0">No payments found.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== USERS TAB ==================== -->
+        <div class="tab-pane fade" id="users">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold mb-0"><i class="bi bi-people me-2"></i>User Management</h5>
+                        <a href="{% url 'owner_user_list' %}" class="btn btn-primary rounded-pill">
+                            <i class="bi bi-arrow-right me-1"></i>Full User List
+                        </a>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4 col-6">
+                            <div class="text-center p-3 bg-light rounded-3">
+                                <div class="h4 fw-bold mb-1" style="color: var(--primary);">{{ total_users }}</div>
+                                <small class="text-secondary">Total Users</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-6">
+                            <div class="text-center p-3 bg-light rounded-3">
+                                <div class="h4 fw-bold mb-1" style="color: var(--primary);">{{ total_students }}</div>
+                                <small class="text-secondary">Students</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-6">
+                            <div class="text-center p-3 bg-light rounded-3">
+                                <div class="h4 fw-bold mb-1" style="color: var(--primary);">{{ total_instructors }}</div>
+                                <small class="text-secondary">Verified Instructors</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% if recent_users %}
+                    <div class="table-responsive">
+                        <table class="table table-borderless align-middle mb-0">
+                            <thead class="text-secondary small">
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>Joined</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for u in recent_users %}
+                                <tr>
+                                    <td class="fw-semibold">{{ u.get_full_name|default:u.username }}</td>
+                                    <td class="small">{{ u.email }}</td>
+                                    <td>
+                                        {% if u.is_superuser %}
+                                        <span class="badge bg-danger">Admin</span>
+                                        {% elif u.is_instructor %}
+                                        <span class="badge bg-primary">Instructor</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">Student</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="small text-secondary">{{ u.date_joined|date:"M d, Y" }}</td>
+                                    <td>
+                                        <span class="badge {% if u.is_active %}bg-success{% else %}bg-danger{% endif %}">
+                                            {{ u.is_active|yesno:"Active,Inactive" }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-secondary text-center py-4 mb-0">No users found.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== COURSES TAB ==================== -->
+        <div class="tab-pane fade" id="courses">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold mb-0"><i class="bi bi-book me-2"></i>Course Management</h5>
+                        <a href="{% url 'owner_course_list' %}" class="btn btn-primary rounded-pill">
+                            <i class="bi bi-arrow-right me-1"></i>Full Course List
+                        </a>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-3 col-6">
+                            <div class="text-center p-3 bg-light rounded-3">
+                                <div class="h4 fw-bold mb-1" style="color: var(--primary);">{{ total_courses }}</div>
+                                <small class="text-secondary">Total Courses</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <div class="text-center p-3 bg-success bg-opacity-10 rounded-3">
+                                <div class="h4 fw-bold mb-1" style="color: #34c759;">{{ published_courses }}</div>
+                                <small class="text-secondary">Published</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <div class="text-center p-3 bg-secondary bg-opacity-10 rounded-3">
+                                <div class="h4 fw-bold mb-1">{{ draft_courses }}</div>
+                                <small class="text-secondary">Drafts</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <div class="text-center p-3 bg-light rounded-3">
+                                <div class="h4 fw-bold mb-1" style="color: var(--primary);">{{ total_categories }}</div>
+                                <small class="text-secondary">Categories</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% if recent_courses %}
+                    <div class="table-responsive">
+                        <table class="table table-borderless align-middle mb-0">
+                            <thead class="text-secondary small">
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Instructor</th>
+                                    <th>Category</th>
+                                    <th class="text-end">Price</th>
+                                    <th>Status</th>
+                                    <th>Created</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for c in recent_courses %}
+                                <tr>
+                                    <td class="fw-semibold small">{{ c.title|truncatechars:35 }}</td>
+                                    <td class="small text-secondary">{{ c.instructor.get_full_name|default:c.instructor.username }}</td>
+                                    <td class="small">{{ c.category.name|default:"—" }}</td>
+                                    <td class="text-end">M{{ c.price|floatformat:2 }}</td>
+                                    <td>
+                                        <span class="badge {% if c.is_published %}bg-success{% else %}bg-secondary{% endif %}">
+                                            {{ c.is_published|yesno:"Published,Draft" }}
+                                        </span>
+                                    </td>
+                                    <td class="small text-secondary">{{ c.created_at|date:"M d, Y" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-secondary text-center py-4 mb-0">No courses found.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== ENROLLMENTS TAB ==================== -->
+        <div class="tab-pane fade" id="enrollments">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold mb-0"><i class="bi bi-person-video3 me-2"></i>Enrollment Management</h5>
+                        <a href="{% url 'owner_enrollment_list' %}" class="btn btn-primary rounded-pill">
+                            <i class="bi bi-arrow-right me-1"></i>Full Enrollment List
+                        </a>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4 col-6">
+                            <div class="text-center p-3 bg-light rounded-3">
+                                <div class="h4 fw-bold mb-1" style="color: var(--primary);">{{ total_enrollments }}</div>
+                                <small class="text-secondary">Total</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-6">
+                            <div class="text-center p-3 bg-success bg-opacity-10 rounded-3">
+                                <div class="h4 fw-bold mb-1" style="color: #34c759;">{{ active_enrollments }}</div>
+                                <small class="text-secondary">Active</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-6">
+                            <div class="text-center p-3 bg-warning bg-opacity-10 rounded-3">
+                                <div class="h4 fw-bold mb-1" style="color: #ff9f0a;">{{ pending_enrollments }}</div>
+                                <small class="text-secondary">Pending</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% if recent_enrollments %}
+                    <div class="table-responsive">
+                        <table class="table table-borderless align-middle mb-0">
+                            <thead class="text-secondary small">
+                                <tr>
+                                    <th>User</th>
+                                    <th>Course</th>
+                                    <th>Status</th>
+                                    <th>Progress</th>
+                                    <th>Enrolled</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for e in recent_enrollments %}
+                                <tr>
+                                    <td class="small">{{ e.user.email|truncatechars:25 }}</td>
+                                    <td class="small">{{ e.course.title|truncatechars:35 }}</td>
+                                    <td>
+                                        <span class="badge {% if e.status == 'active' %}bg-success{% elif e.status == 'pending' %}bg-warning text-dark{% else %}bg-danger{% endif %}">
+                                            {{ e.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="progress flex-grow-1" style="height: 6px;">
+                                                <div class="progress-bar" role="progressbar" style="width: {{ e.progress|floatformat:0 }}%;" aria-valuenow="{{ e.progress|floatformat:0 }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                            </div>
+                                            <small class="text-secondary">{{ e.progress|floatformat:0 }}%</small>
+                                        </div>
+                                    </td>
+                                    <td class="small text-secondary">{{ e.enrolled_at|date:"M d, Y" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-secondary text-center py-4 mb-0">No enrollments found.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== INSTRUCTORS TAB ==================== -->
+        <div class="tab-pane fade" id="instructors">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold mb-0"><i class="bi bi-person-badge me-2"></i>Instructor Management</h5>
+                        <a href="{% url 'owner_instructor_list' %}" class="btn btn-primary rounded-pill">
+                            <i class="bi bi-arrow-right me-1"></i>Full Instructor List
+                        </a>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4 col-6">
+                            <div class="text-center p-3 bg-light rounded-3">
+                                <div class="h4 fw-bold mb-1" style="color: var(--primary);">{{ total_instructors }}</div>
+                                <small class="text-secondary">Verified</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-6">
+                            <div class="text-center p-3 bg-warning bg-opacity-10 rounded-3">
+                                <div class="h4 fw-bold mb-1" style="color: #ff9f0a;">{{ pending_instructor_count }}</div>
+                                <small class="text-secondary">Pending Approval</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-6">
+                            <div class="text-center p-3 bg-light rounded-3">
+                                <div class="h4 fw-bold mb-1">{{ total_courses }}</div>
+                                <small class="text-secondary">Courses by Instructors</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% if pending_instructors %}
+                    <div class="list-group list-group-flush">
+                        {% for profile in pending_instructors %}
+                        <div class="list-group-item px-0 py-3 border-bottom">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <div class="fw-semibold">{{ profile.user.get_full_name|default:profile.user.username }}</div>
+                                    <div class="small text-secondary">{{ profile.user.email }}</div>
+                                    {% if profile.headline %}
+                                    <div class="small text-muted">{{ profile.headline }}</div>
+                                    {% endif %}
+                                    {% if profile.qualifications %}
+                                    <div class="small mt-1">
+                                        <span class="text-secondary">Qualifications:</span>
+                                        <span class="text-muted">{{ profile.qualifications|truncatechars:100 }}</span>
+                                    </div>
+                                    {% endif %}
+                                    <div class="small text-secondary mt-1">Applied: {{ profile.user.date_joined|date:"M d, Y" }}</div>
+                                </div>
+                                <div class="d-flex gap-2 ms-3 flex-shrink-0">
+                                    <a href="{% url 'approve_instructor' profile.pk %}" class="btn btn-sm btn-primary rounded-pill">
+                                        <i class="bi bi-check-lg me-1"></i>Approve
+                                    </a>
+                                    <a href="{% url 'reject_instructor' profile.pk %}" class="btn btn-sm btn-outline-danger rounded-pill">
+                                        <i class="bi bi-x-lg me-1"></i>Reject
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-secondary text-center py-4 mb-0">No pending instructor applications.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .nav-tabs .nav-link {
+        border: none;
+        color: #6c757d;
+        padding: 0.75rem 1rem;
+        border-radius: 0;
+        border-bottom: 3px solid transparent;
+        transition: all 0.2s;
+    }
+    .nav-tabs .nav-link:hover {
+        color: var(--primary);
+        background: transparent;
+    }
+    .nav-tabs .nav-link.active {
+        color: var(--primary);
+        background: transparent;
+        border-bottom-color: var(--primary);
+    }
+    .nav-tabs .nav-link .badge {
+        font-size: 0.65rem;
+    }
+    .stat-card {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        border: 1px solid rgba(0,0,0,0.05);
+        transition: transform 0.2s;
+    }
+    .stat-card:hover {
+        transform: translateY(-2px);
+    }
+    .stat-label {
+        font-size: 0.8rem;
+        color: #6c757d;
+        margin-bottom: 0.25rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .stat-value {
+        font-size: 1.75rem;
+        font-weight: 700;
+        line-height: 1.2;
+    }
+    .progress {
+        background-color: #e9ecef;
+        border-radius: 10px;
+    }
+    .progress-bar {
+        background: linear-gradient(135deg, var(--primary), #0056d2);
+        border-radius: 10px;
+    }
+</style>
+{% endblock %}

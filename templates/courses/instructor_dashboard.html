@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>My Courses</h2>
+<a href="{% url 'course_create' %}" class="btn btn-primary mb-3">Create New Course</a>
+<div class="row">
+    {% for course in courses %}
+    <div class="col-md-4 mb-3">
+        <div class="card">
+            {% if course.thumbnail %}
+            <img src="{{ course.thumbnail.url }}" class="card-img-top" alt="{{ course.title }}">
+            {% endif %}
+            <div class="card-body">
+                <h5 class="card-title">{{ course.title }}</h5>
+                <p class="card-text">{{ course.description|safe|truncatewords:20 }}</p>
+                <a href="{% url 'course_edit' course.pk %}" class="btn btn-sm btn-outline-primary">Edit</a>
+                <a href="{% url 'curriculum' course.pk %}" class="btn btn-sm btn-outline-success">Curriculum</a>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <p>No courses yet. <a href="{% url 'course_create' %}">Create one</a></p>
+    {% endfor %}
+</div>
+{% endblock %}

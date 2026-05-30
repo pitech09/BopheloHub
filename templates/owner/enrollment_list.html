@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Enrollment Management - LearnHub{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="fw-bold mb-1"><i class="bi bi-person-video3 me-2"></i>Enrollment Management</h1>
+            <p class="text-secondary mb-0">View, approve, or reject student enrollments</p>
+        </div>
+        <a href="{% url 'owner_dashboard' %}" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-left me-1"></i>Dashboard
+        </a>
+    </div>
+
+    <!-- Status Filters -->
+    <div class="d-flex flex-wrap gap-2 mb-4">
+        <a href="{% url 'owner_enrollment_list' %}" class="btn btn-sm rounded-pill {% if not current_status %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+            All <span class="badge bg-light text-dark ms-1">{{ total_count }}</span>
+        </a>
+        <a href="{% url 'owner_enrollment_list' %}?status=active" class="btn btn-sm rounded-pill {% if current_status == 'active' %}btn-success{% else %}btn-outline-secondary{% endif %}">
+            <i class="bi bi-check-circle me-1"></i>Active <span class="badge bg-light text-dark ms-1">{{ active_count }}</span>
+        </a>
+        <a href="{% url 'owner_enrollment_list' %}?status=pending" class="btn btn-sm rounded-pill {% if current_status == 'pending' %}btn-warning{% else %}btn-outline-secondary{% endif %}">
+            <i class="bi bi-clock me-1"></i>Pending <span class="badge bg-light text-dark ms-1">{{ pending_count }}</span>
+        </a>
+        <a href="{% url 'owner_enrollment_list' %}?status=rejected" class="btn btn-sm rounded-pill {% if current_status == 'rejected' %}btn-danger{% else %}btn-outline-secondary{% endif %}">
+            <i class="bi bi-x-circle me-1"></i>Rejected <span class="badge bg-light text-dark ms-1">{{ rejected_count }}</span>
+        </a>
+    </div>
+
+    <!-- Search -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <form method="get" class="d-flex gap-2">
+                <input type="text" name="q" class="form-control apple-input" placeholder="Search by user email or course title..." value="{{ search_query }}">
+                <button type="submit" class="btn btn-primary rounded-pill"><i class="bi bi-search"></i></button>
+                {% if current_status %}
+                <input type="hidden" name="status" value="{{ current_status }}">
+                {% endif %}
+            </form>
+        </div>
+    </div>
+
+    <!-- Enrollments Table -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            {% if enrollments %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>User</th>
+                            <th>Course</th>
+                            <th>Status</th>
+                            <th>Progress</th>
+                            <th>Completed</th>
+                            <th>Enrolled</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for e in enrollments %}
+                        <tr>
+                            <td>
+                                <div class="small fw-semibold">{{ e.user.get_full_name|default:e.user.username }}</div>
+                                <div class="small text-secondary">{{ e.user.email }}</div>
+                            </td>
+                            <td class="small">{{ e.course.title|truncatechars:40 }}</td>
+                            <td>
+                                <span class="badge {% if e.status == 'active' %}bg-success{% elif e.status == 'pending' %}bg-warning text-dark{% else %}bg-danger{% endif %}">
+                                    {{ e.get_status_display }}
+                                </span>
+                            </td>
+                            <td style="min-width: 120px;">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="progress flex-grow-1" style="height: 6px;">
+                                        <div class="progress-bar" role="progressbar" style="width: {{ e.progress|floatformat:0 }}%;" aria-valuenow="{{ e.progress|floatformat:0 }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                    <small class="text-secondary">{{ e.progress|floatformat:0 }}%</small>
+                                </div>
+                            </td>
+                            <td>
+                                {% if e.completed %}
+                                <span class="badge bg-success"><i class="bi bi-check-lg me-1"></i>Yes</span>
+                                {% else %}
+                                <span class="badge bg-secondary">No</span>
+                                {% endif %}
+                            </td>
+                            <td class="small text-secondary">{{ e.enrolled_at|date:"M d, Y" }}</td>
+                            <td class="text-end">
+                                {% if e.status == 'pending' %}
+                                <div class="d-flex gap-1 justify-content-end">
+                                    <a href="{% url 'owner_enrollment_approve' e.pk %}" class="btn btn-sm btn-success rounded-pill">
+                                        <i class="bi bi-check-lg"></i>
+                                    </a>
+                                    <a href="{% url 'owner_enrollment_reject' e.pk %}" class="btn btn-sm btn-outline-danger rounded-pill">
+                                        <i class="bi bi-x-lg"></i>
+                                    </a>
+                                </div>
+                                {% else %}
+                                <span class="text-secondary small">—</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% if is_paginated %}
+            <div class="d-flex justify-content-center py-3">
+                <nav>
+                    <ul class="pagination pagination-sm mb-0">
+                        {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}">Previous</a>
+                        </li>
+                        {% endif %}
+                        <li class="page-item disabled">
+                            <span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                        </li>
+                        {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}">Next</a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+            {% endif %}
+
+            {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-person-video3 display-4 text-secondary mb-3 d-block"></i>
+                <p class="text-secondary mb-0">No enrollments found.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

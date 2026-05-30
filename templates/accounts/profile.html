@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Welcome, {{ user.first_name|default:user.email }}</h1>
+<p>Email: {{ user.email }}</p>
+<p>Instructor: {{ user.is_instructor }}</p>
+{% if user.is_instructor %}
+    {% if user.instructor_profile %}
+        <p>Status: {{ user.instructor_profile.get_status_display }}</p>
+    {% else %}
+        <a href="{% url 'instructor_apply' %}" class="btn btn-primary">Complete Instructor Profile</a>
+    {% endif %}
+{% endif %}
+{% endblock %}

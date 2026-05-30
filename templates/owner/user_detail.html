@@ -1,0 +1,219 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}{{ user_obj.get_full_name|default:user_obj.username }} - User Details{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex align-items-center gap-3">
+            <a href="{% url 'owner_user_list' %}" class="btn btn-outline-secondary rounded-pill">
+                <i class="bi bi-arrow-left me-1"></i>Back
+            </a>
+            <div>
+                <h1 class="fw-bold mb-1">{{ user_obj.get_full_name|default:user_obj.username }}</h1>
+                <p class="text-secondary mb-0">{{ user_obj.email }}</p>
+            </div>
+        </div>
+        <div class="d-flex gap-2">
+            <span class="badge {% if user_obj.is_superuser %}bg-danger{% elif user_obj.is_instructor %}bg-primary{% else %}bg-secondary{% endif %} fs-6">
+                {% if user_obj.is_superuser %}Admin{% elif user_obj.is_instructor %}Instructor{% else %}Student{% endif %}
+            </span>
+            <span class="badge {% if user_obj.is_active %}bg-success{% else %}bg-danger{% endif %} fs-6">
+                {{ user_obj.is_active|yesno:"Active,Inactive" }}
+            </span>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- User Profile Card -->
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center p-4">
+                    <div class="avatar bg-primary text-white d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 80px; height: 80px; border-radius: 50%; font-size: 2rem;">
+                        {{ user_obj.get_full_name|first|upper|default:user_obj.username|first|upper }}
+                    </div>
+                    <h5 class="fw-bold">{{ user_obj.get_full_name|default:user_obj.username }}</h5>
+                    <p class="text-secondary small mb-1">@{{ user_obj.username }}</p>
+                    <p class="text-secondary small">{{ user_obj.email }}</p>
+                    <hr>
+                    <div class="text-start small">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-secondary">Joined</span>
+                            <span>{{ user_obj.date_joined|date:"M d, Y" }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-secondary">Last Login</span>
+                            <span>{{ user_obj.last_login|date:"M d, Y"|default:"—" }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-secondary">Role</span>
+                            <span>{% if user_obj.is_superuser %}Admin{% elif user_obj.is_instructor %}Instructor{% else %}Student{% endif %}</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span class="text-secondary">Status</span>
+                            <span class="badge {% if user_obj.is_active %}bg-success{% else %}bg-danger{% endif %}">{{ user_obj.is_active|yesno:"Active,Inactive" }}</span>
+                        </div>
+                    </div>
+                    {% if not user_obj.is_superuser %}
+                    <hr>
+                    <a href="{% url 'owner_user_toggle_active' user_obj.pk %}" class="btn btn-sm {% if user_obj.is_active %}btn-outline-danger{% else %}btn-outline-success{% endif %} rounded-pill w-100"
+                       onclick="return confirm('Are you sure you want to {% if user_obj.is_active %}deactivate{% else %}activate{% endif %} {{ user_obj.email }}?')">
+                        <i class="bi {% if user_obj.is_active %}bi-pause-fill{% else %}bi-play-fill{% endif %} me-1"></i>
+                        {% if user_obj.is_active %}Deactivate User{% else %}Activate User{% endif %}
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if instructor_profile %}
+            <div class="card border-0 shadow-sm mt-4">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-3"><i class="bi bi-person-badge me-2"></i>Instructor Profile</h5>
+                    <div class="small">
+                        <div class="mb-2">
+                            <span class="text-secondary">Status:</span>
+                            <span class="badge {% if instructor_profile.status == 'verified' %}bg-success{% elif instructor_profile.status == 'pending' %}bg-warning text-dark{% else %}bg-danger{% endif %} ms-1">
+                                {{ instructor_profile.get_status_display }}
+                            </span>
+                        </div>
+                        {% if instructor_profile.headline %}
+                        <div class="mb-2"><span class="text-secondary">Headline:</span> {{ instructor_profile.headline }}</div>
+                        {% endif %}
+                        {% if instructor_profile.phone %}
+                        <div class="mb-2"><span class="text-secondary">Phone:</span> {{ instructor_profile.phone }}</div>
+                        {% endif %}
+                        {% if instructor_profile.website %}
+                        <div class="mb-2"><span class="text-secondary">Website:</span> <a href="{{ instructor_profile.website }}" target="_blank">{{ instructor_profile.website }}</a></div>
+                        {% endif %}
+                        {% if instructor_profile.qualifications %}
+                        <div class="mb-2"><span class="text-secondary">Qualifications:</span></div>
+                        <p class="text-muted">{{ instructor_profile.qualifications|linebreaksbr }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="col-md-8">
+            <!-- Enrollments -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-3"><i class="bi bi-book me-2"></i>Enrollments ({{ enrollments|length }})</h5>
+                    {% if enrollments %}
+                    <div class="table-responsive">
+                        <table class="table table-borderless align-middle mb-0 small">
+                            <thead class="text-secondary">
+                                <tr>
+                                    <th>Course</th>
+                                    <th>Status</th>
+                                    <th>Progress</th>
+                                    <th>Enrolled</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for e in enrollments %}
+                                <tr>
+                                    <td class="fw-semibold">{{ e.course.title|truncatechars:35 }}</td>
+                                    <td>
+                                        <span class="badge {% if e.status == 'active' %}bg-success{% elif e.status == 'pending' %}bg-warning text-dark{% else %}bg-danger{% endif %}">
+                                            {{ e.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="progress flex-grow-1" style="height: 6px; width: 80px;">
+                                                <div class="progress-bar" style="width: {{ e.progress|floatformat:0 }}%;"></div>
+                                            </div>
+                                            <span>{{ e.progress|floatformat:0 }}%</span>
+                                        </div>
+                                    </td>
+                                    <td class="text-secondary">{{ e.enrolled_at|date:"M d, Y" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-secondary text-center py-3 mb-0">No enrollments.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Payments -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-3"><i class="bi bi-cash-stack me-2"></i>Payments ({{ payments|length }})</h5>
+                    {% if payments %}
+                    <div class="table-responsive">
+                        <table class="table table-borderless align-middle mb-0 small">
+                            <thead class="text-secondary">
+                                <tr>
+                                    <th>Reference</th>
+                                    <th>Course</th>
+                                    <th class="text-end">Amount</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for p in payments %}
+                                <tr>
+                                    <td class="fw-semibold">{{ p.reference_number|truncatechars:20 }}</td>
+                                    <td>{{ p.course.title|truncatechars:30 }}</td>
+                                    <td class="text-end fw-semibold">M{{ p.amount|floatformat:2 }}</td>
+                                    <td>
+                                        <span class="badge {% if p.status == 'verified' %}bg-success{% elif p.status == 'pending' %}bg-warning text-dark{% else %}bg-danger{% endif %}">
+                                            {{ p.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td class="text-secondary">{{ p.paid_at|date:"M d, Y" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-secondary text-center py-3 mb-0">No payments.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Reviews -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-3"><i class="bi bi-star me-2"></i>Reviews ({{ reviews|length }})</h5>
+                    {% if reviews %}
+                    <div class="list-group list-group-flush">
+                        {% for r in reviews %}
+                        <div class="list-group-item px-0 py-2 border-bottom">
+                            <div class="small fw-semibold">{{ r.course.title }}</div>
+                            <div class="d-flex align-items-center gap-2">
+                                <span style="color: #ff9f0a;">
+                                    {% for i in "12345" %}
+                                        {% if forloop.counter <= r.rating %}
+                                        <i class="bi bi-star-fill"></i>
+                                        {% else %}
+                                        <i class="bi bi-star"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                </span>
+                                <span class="small text-secondary">{{ r.created_at|date:"M d, Y" }}</span>
+                            </div>
+                            {% if r.comment %}
+                            <div class="small text-muted mt-1">{{ r.comment|truncatechars:150 }}</div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-secondary text-center py-3 mb-0">No reviews.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

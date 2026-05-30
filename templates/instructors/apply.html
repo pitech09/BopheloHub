@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% block content %}
+<h2>Instructor Application</h2>
+<p>Upload your documents for verification.</p>
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form|crispy }}
+    <button type="submit" class="btn btn-primary">Submit Application</button>
+</form>
+{% endblock %}

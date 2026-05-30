@@ -1,0 +1,328 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load course_filters %}
+
+{% block title %}{{ course.title }} - LearnHub{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Course Hero Section -->
+    <div class="course-detail-hero">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <div class="d-flex align-items-center mb-3">
+                    {% if course.category %}
+                        <span class="badge bg-primary me-2">{{ course.category.name }}</span>
+                    {% endif %}
+                    <span class="text-white-50"><i class="bi bi-clock me-1"></i>Updated {{ course.updated_at|date:"M Y" }}</span>
+                </div>
+                <h1 class="text-black mb-3">{{ course.title }}</h1>
+                <p class="text-black-50 lead">{{ course.description|striptags|truncatewords:30 }}</p>
+
+                <!-- Instructor Info -->
+                <div class="d-flex align-items-center mt-4">
+                    {% if course.instructor.profile.avatar %}
+                        <img src="{{ course.instructor.profile.avatar.url }}" alt="{{ course.instructor.get_full_name }}" class="rounded-circle me-3" style="width: 50px; height: 50px; object-fit: cover;">
+                    {% else %}
+                        <div class="rounded-circle bg-white text-primary d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px; font-size: 1.5rem;">
+                            {{ course.instructor.get_full_name|first|upper }}
+                        </div>
+                    {% endif %}
+                    <div>
+                        <p class="text-white mb-0 fw-semibold">{{ course.instructor.get_full_name|default:course.instructor.username }}</p>
+                        <p class="text-white-50 mb-0 small">Instructor</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 d-none d-lg-block">
+                {% if course.thumbnail %}
+                    <img src="{{ course.thumbnail.url }}" alt="{{ course.title }}" class="img-fluid rounded shadow-lg" style="max-height: 250px; object-fit: cover;">
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <!-- Course Stats -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <div class="stat-card text-center">
+                        <div class="stat-value text-primary">
+                            <i class="bi bi-book me-1"></i>{{ course.sections.count }}
+                        </div>
+                        <div class="stat-label">Sections</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-card text-center">
+                        <div class="stat-value text-primary">
+                            <i class="bi bi-play-circle me-1"></i>{{ course.total_lessons }}
+                        </div>
+                        <div class="stat-label">Lessons</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-card text-center">
+                        <div class="stat-value text-primary">
+                            <i class="bi bi-people me-1"></i>{{ course.enrolled_count }}
+                        </div>
+                        <div class="stat-label">Students</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Course Description -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <h3 class="fw-bold mb-3"><i class="bi bi-journal-text me-2"></i>What you'll learn</h3>
+                    <div class="course-description">
+                        {{ course.description|safe }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reviews Section -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h3 class="fw-bold mb-0"><i class="bi bi-star me-2"></i>Student Reviews</h3>
+                        {% if is_enrolled %}
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#reviewModal">
+                                <i class="bi bi-pencil me-1"></i>Write a Review
+                            </button>
+                        {% endif %}
+                    </div>
+
+                    <!-- Rating Summary -->
+                    <div class="row mb-4">
+                        <div class="col-md-4 text-center">
+                            <div class="display-4 fw-bold text-warning">
+                                {{ course.average_rating|floatformat:1 }}
+                            </div>
+                            <div class="mb-2">
+                                {% for i in "12345"|make_list %}
+                                    {% if course.average_rating >= forloop.counter %}
+                                        <i class="bi bi-star-fill text-warning"></i>
+                                    {% elif course.average_rating >= forloop.counter|add:'-0.5' %}
+                                        <i class="bi bi-star-half text-warning"></i>
+                                    {% else %}
+                                        <i class="bi bi-star text-muted"></i>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                            <p class="text-muted mb-0">{{ course.review_count }} reviews</p>
+                        </div>
+                        <div class="col-md-8">
+                            {% for rating_value in "54321"|make_list %}
+                                <div class="d-flex align-items-center mb-2">
+                                    <span class="me-2">{{ rating_value }}</span>
+                                    <i class="bi bi-star-fill text-warning me-2" style="font-size: 0.8rem;"></i>
+                                    <div class="progress flex-grow-1" style="height: 8px;">
+                                        <div class="progress-bar bg-warning" role="progressbar" style="width: {{ course|rating_percentage:rating_value }}%;"></div>
+                                    </div>
+                                    <span class="ms-2 text-muted">{{ course|rating_count:rating_value }}</span>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Individual Reviews -->
+                    <div class="reviews-list">
+                        {% for review in reviews %}
+                            <div class="review-card">
+                                <div class="review-header">
+                                    {% if review.user.profile.avatar %}
+                                        <img src="{{ review.user.profile.avatar.url }}" alt="{{ review.user.get_full_name }}" class="rounded-circle" style="width: 48px; height: 48px; object-fit: cover;">
+                                    {% else %}
+                                        <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                                            {{ review.user.get_full_name|first|upper }}
+                                        </div>
+                                    {% endif %}
+                                    <div class="flex-grow-1">
+                                        <div class="review-author">{{ review.user.get_full_name|default:review.user.username }}</div>
+                                        <div class="text-warning">
+                                            {% for i in "12345"|make_list %}
+                                                {% if review.rating >= forloop.counter %}
+                                                    <i class="bi bi-star-fill"></i>
+                                                {% else %}
+                                                    <i class="bi bi-star text-muted"></i>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    <div class="text-muted small">
+                                        {{ review.created_at|date:"M d, Y" }}
+                                    </div>
+                                </div>
+                                {% if review.comment %}
+                                    <p class="review-comment mb-0">{{ review.comment }}</p>
+                                {% endif %}
+                            </div>
+                        {% empty %}
+                            <p class="text-muted text-center py-4">No reviews yet. Be the first to review this course!</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Enrollment Card -->
+            <div class="card border-0 shadow-lg sticky-top" style="top: 100px; z-index: 100;">
+                {% if course.thumbnail %}
+                    <img src="{{ course.thumbnail.url }}" class="card-img-top" alt="{{ course.title }}" style="height: 200px; object-fit: cover;">
+                {% endif %}
+                <div class="card-body">
+                    <h2 class="h4 fw-bold mb-3">
+                        {% if course.price == 0 %}
+                            <span class="text-success"><i class="bi bi-gift me-1"></i>Free</span>
+                        {% else %}
+                            M{{ course.price }}
+                        {% endif %}
+                    </h2>
+                    
+                    {% if user.is_authenticated %}
+                        {% if is_enrolled %}
+                            {% if course.first_lesson_id %}
+                                <a href="{% url 'lesson_play' course.first_lesson_id %}" class="btn btn-success btn-lg w-100 mb-2">
+                                    <i class="bi bi-play-circle me-2"></i>Continue Learning
+                                </a>
+                            {% endif %}
+                            <a href="{% url 'student_dashboard' %}" class="btn btn-outline-primary w-100">
+                                <i class="bi bi-speedometer2 me-2"></i>Go to Dashboard
+                            </a>
+                        {% else %}
+                            <form method="post" action="{% url 'enroll_course' course.slug %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-primary btn-lg w-100">
+                                    <i class="bi bi-cart-check me-2"></i>Enroll Now
+                                </button>
+                            </form>
+                        {% endif %}
+                    {% else %}
+                        <a href="{% url 'login' %}?next={{ request.path }}" class="btn btn-primary btn-lg w-100 mb-2">
+                            <i class="bi bi-box-arrow-in-right me-2"></i>Log in to Enroll
+                        </a>
+                        <a href="{% url 'register_student' %}" class="btn btn-outline-primary w-100">
+                            <i class="bi bi-person-plus me-2"></i>Create Account
+                        </a>
+                    {% endif %}
+                    
+                    <div class="mt-4 pt-4 border-top">
+                        <p class="mb-2"><i class="bi bi-infinity me-2"></i>Full lifetime access</p>
+                        <p class="mb-2"><i class="bi bi-laptop me-2"></i>Access on mobile and TV</p>
+                        <p class="mb-2"><i class="bi bi-download me-2"></i>Downloadable resources</p>
+                        <p class="mb-0"><i class="bi bi-award me-2"></i>Certificate of completion</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Curriculum Section -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h3 class="fw-bold mb-4"><i class="bi bi-list-ul me-2"></i>Course Curriculum</h3>
+                    
+                    <div class="accordion" id="curriculumAccordion">
+                        {% for section in course.sections.all %}
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="heading{{ section.pk }}">
+                                    <button class="accordion-button {% if forloop.first %}{% else %}collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ section.pk }}" aria-expanded="{% if forloop.first %}true{% else %}false{% endif %}" aria-controls="collapse{{ section.pk }}">
+                                        <div class="d-flex justify-content-between align-items-center w-100">
+                                            <span class="fw-semibold">
+                                                <i class="bi bi-folder me-2"></i>Section {{ forloop.counter }}: {{ section.title }}
+                                            </span>
+                                            <span class="text-muted small">
+                                                <i class="bi bi-play-circle me-1"></i>{{ section.lessons.count }} lesson{{ section.lessons.count|pluralize }}
+                                            </span>
+                                        </div>
+                                    </button>
+                                </h2>
+                                <div id="collapse{{ section.pk }}" class="accordion-collapse collapse {% if forloop.first %}show{% endif %}" aria-labelledby="heading{{ section.pk }}" data-bs-parent="#curriculumAccordion">
+                                    <div class="accordion-body p-0">
+                                        <ul class="list-group list-group-flush">
+                                            {% for lesson in section.lessons.all %}
+                                                <li class="list-group-item d-flex justify-content-between align-items-center p-3">
+                                                    <div>
+                                                        {% if user.is_authenticated and is_enrolled %}
+                                                            <a href="{% url 'lesson_play' lesson.pk %}" class="text-decoration-none">
+                                                                <i class="bi bi-play-circle text-primary me-2"></i>
+                                                                <span>{{ lesson.title }}</span>
+                                                            </a>
+                                                        {% else %}
+                                                            <i class="bi bi-play-circle text-primary me-2"></i>
+                                                            <span>{{ lesson.title }}</span>
+                                                        {% endif %}
+                                                    </div>
+                                                    <div class="d-flex align-items-center gap-2">
+                                                        {% if lesson.video_url %}
+                                                            <span class="badge bg-info">Video</span>
+                                                        {% endif %}
+                                                        {% if lesson.quiz %}
+                                                            <span class="badge bg-warning text-dark">Quiz</span>
+                                                        {% endif %}
+                                                        <small class="text-muted">
+                                                            <i class="bi bi-clock me-1"></i>{{ lesson.duration|default:"N/A" }}
+                                                        </small>
+                                                    </div>
+                                                </li>
+                                            {% endfor %}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        {% empty %}
+                            <p class="text-muted text-center py-4">No curriculum available yet.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Review Modal -->
+<div class="modal fade" id="reviewModal" tabindex="-1" aria-labelledby="reviewModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="reviewModalLabel">Write a Review</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post" action="{% url 'reviews:create_review' course.pk %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Your Rating</label>
+                        <div class="rating-input">
+                            <input type="radio" name="rating" value="5" id="rating5" class="btn-check" required>
+                            <label class="btn btn-outline-warning" for="rating5"><i class="bi bi-star-fill"></i></label>
+                            <input type="radio" name="rating" value="4" id="rating4" class="btn-check">
+                            <label class="btn btn-outline-warning" for="rating4"><i class="bi bi-star-fill"></i></label>
+                            <input type="radio" name="rating" value="3" id="rating3" class="btn-check">
+                            <label class="btn btn-outline-warning" for="rating3"><i class="bi bi-star-fill"></i></label>
+                            <input type="radio" name="rating" value="2" id="rating2" class="btn-check">
+                            <label class="btn btn-outline-warning" for="rating2"><i class="bi bi-star-fill"></i></label>
+                            <input type="radio" name="rating" value="1" id="rating1" class="btn-check">
+                            <label class="btn btn-outline-warning" for="rating1"><i class="bi bi-star-fill"></i></label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="comment" class="form-label fw-semibold">Your Review</label>
+                        <textarea class="form-control" id="comment" name="comment" rows="4" placeholder="Share your experience with this course..."></textarea>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">Submit Review</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

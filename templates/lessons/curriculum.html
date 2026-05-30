@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Curriculum for "{{ course.title }}"</h2>
+<a href="{% url 'section_create' course.pk %}" class="btn btn-sm btn-secondary mb-3">Add Section</a>
+{% for section in sections %}
+    <div class="card mb-2">
+        <div class="card-header d-flex justify-content-between">
+            <strong>{{ section.title }}</strong>
+            <a href="{% url 'lesson_create' section.pk %}" class="btn btn-sm btn-primary">+ Add Lesson</a>
+        </div>
+        <ul class="list-group list-group-flush">
+            {% for lesson in section.lessons.all %}
+                <li class="list-group-item">{{ lesson.order }}. {{ lesson.title }}</li>
+            {% empty %}
+                <li class="list-group-item text-muted">No lessons yet.</li>
+            {% endfor %}
+        </ul>
+    </div>
+{% empty %}
+    <p>No sections yet. Add one to begin building your curriculum.</p>
+{% endfor %}
+<a href="{% url 'instructor_dashboard' %}" class="btn btn-link mt-3">&larr; Back to Dashboard</a>
+{% endblock %}

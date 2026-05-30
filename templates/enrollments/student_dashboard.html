@@ -1,0 +1,337 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load enrollment_filters %}
+
+{% block title %}My Learning Dashboard - LearnHub{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="fw-bold mb-1"><i class="bi bi-mortarboard me-2"></i>My Learning Dashboard</h1>
+            <p class="text-muted mb-0">Track your progress and continue learning</p>
+        </div>
+        <a href="{% url 'course_list' %}" class="btn btn-primary">
+        <i class="bi bi-plus-circle me-1"></i>Browse More Courses
+        </a>
+    </div>
+
+    <!-- Stats Overview -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="stat-value">{{ enrollments.count }}</div>
+                        <div class="stat-label">Enrolled Courses</div>
+                    </div>
+                    <i class="bi bi-book text-primary" style="font-size: 2rem;"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card success">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="stat-value">{{ completed_count }}</div>
+                        <div class="stat-label">Completed</div>
+                    </div>
+                    <i class="bi bi-check-circle text-success" style="font-size: 2rem;"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card warning">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="stat-value">{{ in_progress_count }}</div>
+                        <div class="stat-label">In Progress</div>
+                    </div>
+                    <i class="bi bi-clock-history text-warning" style="font-size: 2rem;"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card info">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="stat-value">{{ certificates.count }}</div>
+                        <div class="stat-label">Certificates</div>
+                    </div>
+                    <i class="bi bi-award text-info" style="font-size: 2rem;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs for filtering -->
+    <ul class="nav nav-tabs mb-4" id="dashboardTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="all-tab" data-bs-toggle="tab" data-bs-target="#all" type="button" role="tab">
+                <i class="bi bi-grid me-1"></i>All Courses
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="in-progress-tab" data-bs-toggle="tab" data-bs-target="#in-progress" type="button" role="tab">
+                <i class="bi bi-play-circle me-1"></i>In Progress
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="completed-tab" data-bs-toggle="tab" data-bs-target="#completed" type="button" role="tab">
+                <i class="bi bi-check-circle me-1"></i>Completed
+            </button>
+        </li>
+    </ul>
+
+    <!-- Tab Content -->
+    <div class="tab-content" id="dashboardTabsContent">
+        <!-- All Courses Tab -->
+        <div class="tab-pane fade show active" id="all" role="tabpanel">
+            {% if enrollments %}
+                <div class="row g-4">
+                    {% for enrollment in enrollments %}
+                        <div class="col-md-4">
+                            <div class="card h-100">
+                                <div class="position-relative">
+                                    {% if enrollment.course.thumbnail %}
+                                        <img src="{{ enrollment.course.thumbnail.url }}" class="card-img-top" alt="{{ enrollment.course.title }}" style="height: 180px; object-fit: cover;">
+                                    {% else %}
+                                        <div class="card-img-top bg-gradient d-flex align-items-center justify-content-center" style="height: 180px; background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);">
+                                            <i class="bi bi-book text-white" style="font-size: 3rem;"></i>
+                                        </div>
+                                    {% endif %}
+                                    {% if enrollment.completed %}
+                                        <span class="position-absolute top-0 end-0 m-2 badge bg-success">
+                                            <i class="bi bi-check-circle me-1"></i>Completed
+                                        </span>
+                                    {% endif %}
+                                </div>
+                                <div class="card-body">
+                                    <h5 class="card-title">
+                                        <a href="{% url 'course_detail' enrollment.course.slug %}" class="text-decoration-none text-dark">
+                                            {{ enrollment.course.title }}
+                                        </a>
+                                    </h5>
+                                    <p class="text-muted small mb-3">
+                                        <i class="bi bi-person me-1"></i>{{ enrollment.course.instructor.get_full_name|default:enrollment.course.instructor.username }}
+                                    </p>
+                                    
+                                    <!-- Progress Bar -->
+                                    <div class="mb-3">
+                                        <div class="d-flex justify-content-between mb-1">
+                                            <small class="text-muted">Progress</small>
+                                            <small class="fw-semibold">{{ enrollment.progress }}%</small>
+                                        </div>
+                                        <div class="progress">
+                                            <div class="progress-bar" role="progressbar" style="width: {{ enrollment.progress }}%;" 
+                                                aria-valuenow="{{ enrollment.progress }}" aria-valuemin="0" aria-valuemax="100">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Last Activity -->
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <small class="text-muted">
+                                            {% if enrollment.last_accessed %}
+                                                <i class="bi bi-clock me-1"></i>{{ enrollment.last_accessed|timesince }} ago
+                                            {% endif %}
+                                        </small>
+                                        {% if enrollment.course.first_lesson_id %}
+                                            <a href="{% url 'lesson_play' enrollment.course.first_lesson_id %}" class="btn btn-sm btn-primary">
+                                                {% if enrollment.progress > 0 %}
+                                                    <i class="bi bi-play me-1"></i>Continue
+                                                {% else %}
+                                                    <i class="bi bi-arrow-right me-1"></i>Start
+                                                {% endif %}
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-state-icon">
+                        <i class="bi bi-book"></i>
+                    </div>
+                    <h3>No courses yet</h3>
+                    <p class="text-muted">You haven't enrolled in any courses. Start your learning journey today!</p>
+                    <a href="{% url 'course_list' %}" class="btn btn-primary mt-3">
+                        <i class="bi bi-compass me-1"></i>Browse Courses
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- In Progress Tab -->
+        <div class="tab-pane fade" id="in-progress" role="tabpanel">
+            {% with in_progress=enrollments|filter_in_progress %}
+                {% if in_progress %}
+                    <div class="row g-4">
+                        {% for enrollment in in_progress %}
+                            <div class="col-md-4">
+                                <div class="card h-100">
+                                    <div class="position-relative">
+                                        {% if enrollment.course.thumbnail %}
+                                            <img src="{{ enrollment.course.thumbnail.url }}" class="card-img-top" alt="{{ enrollment.course.title }}" style="height: 180px; object-fit: cover;">
+                                        {% else %}
+                                            <div class="card-img-top bg-gradient d-flex align-items-center justify-content-center" style="height: 180px; background: linear-gradient(135deg, #f6c23e 0%, #f39c12 100%);">
+                                                <i class="bi bi-play-circle text-white" style="font-size: 3rem;"></i>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="card-body">
+                                        <h5 class="card-title">
+                                            <a href="{% url 'course_detail' enrollment.course.slug %}" class="text-decoration-none text-dark">
+                                                {{ enrollment.course.title }}
+                                            </a>
+                                        </h5>
+                                        <div class="mb-3">
+                                            <div class="d-flex justify-content-between mb-1">
+                                                <small class="text-muted">Progress</small>
+                                                <small class="fw-semibold">{{ enrollment.progress }}%</small>
+                                            </div>
+                                            <div class="progress">
+                                                <div class="progress-bar bg-warning" role="progressbar" style="width: {{ enrollment.progress }}%;"></div>
+                                            </div>
+                                        </div>
+                                        {% if enrollment.course.first_lesson_id %}
+                                            <a href="{% url 'lesson_play' enrollment.course.first_lesson_id %}" class="btn btn-primary w-100">
+                                                <i class="bi bi-play me-1"></i>Continue Learning
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="bi bi-check-circle text-success" style="font-size: 4rem;"></i>
+                        <h4 class="mt-3">All caught up!</h4>
+                        <p class="text-muted">You don't have any courses in progress.</p>
+                    </div>
+                {% endif %}
+            {% endwith %}
+        </div>
+
+        <!-- Completed Tab -->
+        <div class="tab-pane fade" id="completed" role="tabpanel">
+            {% with completed=enrollments|filter_completed %}
+                {% if completed %}
+                    <div class="row g-4">
+                        {% for enrollment in completed %}
+                            <div class="col-md-4">
+                                <div class="card h-100 border-success">
+                                    <div class="position-relative">
+                                        {% if enrollment.course.thumbnail %}
+                                            <img src="{{ enrollment.course.thumbnail.url }}" class="card-img-top" alt="{{ enrollment.course.title }}" style="height: 180px; object-fit: cover;">
+                                        {% else %}
+                                            <div class="card-img-top bg-gradient d-flex align-items-center justify-content-center" style="height: 180px; background: linear-gradient(135deg, #1cc88a 0%, #138f5d 100%);">
+                                                <i class="bi bi-check-circle text-white" style="font-size: 3rem;"></i>
+                                            </div>
+                                        {% endif %}
+                                        <span class="position-absolute top-0 end-0 m-2 badge bg-success">
+                                            <i class="bi bi-check-circle me-1"></i>Completed
+                                        </span>
+                                    </div>
+                                    <div class="card-body">
+                                        <h5 class="card-title">
+                                            <a href="{% url 'course_detail' enrollment.course.slug %}" class="text-decoration-none text-dark">
+                                                {{ enrollment.course.title }}
+                                            </a>
+                                        </h5>
+                                        <div class="mb-3">
+                                            <div class="d-flex justify-content-between mb-1">
+                                                <small class="text-muted">Progress</small>
+                                                <small class="fw-semibold text-success">100%</small>
+                                            </div>
+                                            <div class="progress">
+                                                <div class="progress-bar bg-success" role="progressbar" style="width: 100%;"></div>
+                                            </div>
+                                        </div>
+                                        <div class="d-flex gap-2">
+                                            <a href="{% url 'certificates:certificate_detail' enrollment.certificate.pk %}" class="btn btn-outline-primary flex-grow-1">
+                                                <i class="bi bi-award me-1"></i>Certificate
+                                            </a>
+                                            <a href="{% url 'course_detail' enrollment.course.slug %}" class="btn btn-outline-secondary">
+                                                <i class="bi bi-arrow-repeat me-1"></i>Review
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="bi bi-trophy text-warning" style="font-size: 4rem;"></i>
+                        <h4 class="mt-3">No completed courses yet</h4>
+                        <p class="text-muted">Keep learning and you'll earn certificates soon!</p>
+                    </div>
+                {% endif %}
+            {% endwith %}
+        </div>
+    </div>
+
+    <!-- Learning Goals Section -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h3 class="fw-bold mb-4"><i class="bi bi-graph-up-arrow me-2"></i>Your Learning Stats</h3>
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <h5 class="text-muted mb-3">Weekly Activity</h5>
+                            <div class="d-flex justify-content-between align-items-end" style="height: 150px;">
+                                {% for day in weekly_activity %}
+                                    <div class="text-center">
+                                        <div class="bg-primary rounded-top" style="width: 40px; height: {{ day.minutes|add:20 }}px; min-height: 10px;"></div>
+                                        <small class="text-muted d-block mt-1">{{ day.day }}</small>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h5 class="text-muted mb-3">Achievements</h5>
+                            <div class="row g-3">
+                                <div class="col-6">
+                                    <div class="p-3 bg-light rounded text-center">
+                                        <i class="bi bi-fire text-danger" style="font-size: 2rem;"></i>
+                                        <p class="mb-0 mt-2 fw-semibold">{{ streak_days }}</p>
+                                        <small class="text-muted">Day Streak</small>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="p-3 bg-light rounded text-center">
+                                        <i class="bi bi-bookmark text-primary" style="font-size: 2rem;"></i>
+                                        <p class="mb-0 mt-2 fw-semibold">{{ lessons_completed }}</p>
+                                        <small class="text-muted">Lessons Done</small>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="p-3 bg-light rounded text-center">
+                                        <i class="bi bi-clock text-success" style="font-size: 2rem;"></i>
+                                        <p class="mb-0 mt-2 fw-semibold">{{ total_hours }}</p>
+                                        <small class="text-muted">Hours Learned</small>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="p-3 bg-light rounded text-center">
+                                        <i class="bi bi-star text-warning" style="font-size: 2rem;"></i>
+                                        <p class="mb-0 mt-2 fw-semibold">{{ avg_quiz_score|floatformat:0 }}%</p>
+                                        <small class="text-muted">Avg Quiz Score</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

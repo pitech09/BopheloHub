@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Instructor Management - LearnHub{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="fw-bold mb-1"><i class="bi bi-person-badge me-2"></i>Instructor Management</h1>
+            <p class="text-secondary mb-0">View and manage instructor applications and profiles</p>
+        </div>
+        <a href="{% url 'owner_dashboard' %}" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-left me-1"></i>Dashboard
+        </a>
+    </div>
+
+    <!-- Status Filters -->
+    <div class="d-flex flex-wrap gap-2 mb-4">
+        <a href="{% url 'owner_instructor_list' %}" class="btn btn-sm rounded-pill {% if not current_status %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+            All <span class="badge bg-light text-dark ms-1">{{ total_count }}</span>
+        </a>
+        <a href="{% url 'owner_instructor_list' %}?status=pending" class="btn btn-sm rounded-pill {% if current_status == 'pending' %}btn-warning{% else %}btn-outline-secondary{% endif %}">
+            <i class="bi bi-clock me-1"></i>Pending <span class="badge bg-light text-dark ms-1">{{ pending_count }}</span>
+        </a>
+        <a href="{% url 'owner_instructor_list' %}?status=verified" class="btn btn-sm rounded-pill {% if current_status == 'verified' %}btn-success{% else %}btn-outline-secondary{% endif %}">
+            <i class="bi bi-check-circle me-1"></i>Verified <span class="badge bg-light text-dark ms-1">{{ verified_count }}</span>
+        </a>
+        <a href="{% url 'owner_instructor_list' %}?status=rejected" class="btn btn-sm rounded-pill {% if current_status == 'rejected' %}btn-danger{% else %}btn-outline-secondary{% endif %}">
+            <i class="bi bi-x-circle me-1"></i>Rejected <span class="badge bg-light text-dark ms-1">{{ rejected_count }}</span>
+        </a>
+    </div>
+
+    <!-- Search -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <form method="get" class="d-flex gap-2">
+                <input type="text" name="q" class="form-control apple-input" placeholder="Search by name, email, or headline..." value="{{ search_query }}">
+                <button type="submit" class="btn btn-primary rounded-pill"><i class="bi bi-search"></i></button>
+                {% if current_status %}
+                <input type="hidden" name="status" value="{{ current_status }}">
+                {% endif %}
+            </form>
+        </div>
+    </div>
+
+    <!-- Instructors List -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            {% if profiles %}
+            <div class="list-group list-group-flush">
+                {% for profile in profiles %}
+                <div class="list-group-item px-4 py-3">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="d-flex gap-3">
+                            <div class="avatar bg-primary text-white d-flex align-items-center justify-content-center flex-shrink-0" style="width: 48px; height: 48px; border-radius: 50%; font-size: 1.25rem;">
+                                {{ profile.user.get_full_name|first|upper|default:profile.user.username|first|upper }}
+                            </div>
+                            <div>
+                                <div class="fw-semibold">{{ profile.user.get_full_name|default:profile.user.username }}</div>
+                                <div class="small text-secondary">{{ profile.user.email }}</div>
+                                {% if profile.headline %}
+                                <div class="small text-muted mt-1">{{ profile.headline }}</div>
+                                {% endif %}
+                                {% if profile.qualifications %}
+                                <div class="small mt-2">
+                                    <span class="text-secondary">Qualifications:</span>
+                                    <span class="text-muted">{{ profile.qualifications|truncatechars:120 }}</span>
+                                </div>
+                                {% endif %}
+                                <div class="d-flex gap-3 mt-2 small text-secondary">
+                                    {% if profile.phone %}
+                                    <span><i class="bi bi-telephone me-1"></i>{{ profile.phone }}</span>
+                                    {% endif %}
+                                    {% if profile.website %}
+                                    <span><i class="bi bi-globe me-1"></i><a href="{{ profile.website }}" target="_blank" class="text-decoration-none">{{ profile.website|truncatechars:30 }}</a></span>
+                                    {% endif %}
+                                    <span><i class="bi bi-calendar me-1"></i>Applied {{ profile.user.date_joined|date:"M d, Y" }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-2 ms-3 flex-shrink-0 align-items-center">
+                            <span class="badge {% if profile.status == 'verified' %}bg-success{% elif profile.status == 'pending' %}bg-warning text-dark{% else %}bg-danger{% endif %} me-2">
+                                {{ profile.get_status_display }}
+                            </span>
+                            {% if profile.status == 'pending' %}
+                            <a href="{% url 'approve_instructor' profile.pk %}" class="btn btn-sm btn-primary rounded-pill">
+                                <i class="bi bi-check-lg me-1"></i>Approve
+                            </a>
+                            <a href="{% url 'reject_instructor' profile.pk %}" class="btn btn-sm btn-outline-danger rounded-pill">
+                                <i class="bi bi-x-lg me-1"></i>Reject
+                            </a>
+                            {% endif %}
+                            <a href="{% url 'owner_user_detail' profile.user.pk %}" class="btn btn-sm btn-outline-secondary rounded-pill">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            {% if is_paginated %}
+            <div class="d-flex justify-content-center py-3">
+                <nav>
+                    <ul class="pagination pagination-sm mb-0">
+                        {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}">Previous</a>
+                        </li>
+                        {% endif %}
+                        <li class="page-item disabled">
+                            <span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                        </li>
+                        {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}">Next</a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+            {% endif %}
+
+            {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-person-badge display-4 text-secondary mb-3 d-block"></i>
+                <p class="text-secondary mb-0">No instructor profiles found.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

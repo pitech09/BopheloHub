@@ -1,0 +1,278 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ lesson.title }} - {{ course.title }} - LearnHub{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar - Course Navigation -->
+        <div class="col-md-3 col-lg-2 p-0">
+            <div class="curriculum-sidebar vh-100 overflow-auto">
+                <!-- Course Info -->
+                <div class="pb-3 mb-3 border-bottom">
+                    <a href="{% url 'course_detail' course.slug %}" class="text-decoration-none">
+                        <h6 class="fw-bold mb-1 text-dark">
+                            <i class="bi bi-arrow-left me-1"></i>{{ course.title }}
+                        </h6>
+                    </a>
+                    <div class="progress mt-2" style="height: 6px;">
+                        <div class="progress-bar bg-success" role="progressbar" style="width: {{ course_progress }}%;" 
+                            aria-valuenow="{{ course_progress }}" aria-valuemin="0" aria-valuemax="100">
+                        </div>
+                    </div>
+                    <small class="text-muted">{{ course_progress }}% Complete</small>
+                </div>
+
+                <!-- Sections and Lessons -->
+                {% for section in sections %}
+                    <div class="curriculum-section">
+                        <div class="curriculum-section-title" data-bs-toggle="collapse" data-bs-target="#section{{ section.pk }}" style="cursor: pointer;">
+                            <i class="bi bi-chevron-down me-1"></i>{{ section.title }}
+                        </div>
+                        <div class="collapse show" id="section{{ section.pk }}">
+                            {% for les in section.lessons.all %}
+                                <a href="{% url 'lesson_play' les.pk %}" 
+                                   class="curriculum-lesson text-decoration-none text-dark {% if les.pk == lesson.pk %}active{% endif %} {% if les.pk in completed_lessons %}completed{% endif %}">
+                                    {% if les.pk in completed_lessons %}
+                                        <i class="bi bi-check-circle-fill text-success"></i>
+                                    {% else %}
+                                        <i class="bi bi-circle"></i>
+                                    {% endif %}
+                                    <span class="flex-grow-1">{{ les.title }}</span>
+                                    {% if les.video_url %}
+                                        <i class="bi bi-play-circle text-muted"></i>
+                                    {% endif %}
+                                </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="col-md-9 col-lg-10">
+            <div class="py-4 px-4">
+                <!-- Lesson Header -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <span class="badge bg-primary me-2">{{ section_title }}</span>
+                        <span class="text-muted">
+                            {% if is_completed %}
+                                <i class="bi bi-check-circle text-success me-1"></i>Completed
+                            {% else %}
+                                <i class="bi bi-circle me-1"></i>In Progress
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <!-- Navigation Buttons -->
+                        {% if previous_lesson %}
+                            <a href="{% url 'lesson_play' previous_lesson.pk %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-chevron-left me-1"></i>Previous
+                            </a>
+                        {% endif %}
+                        {% if next_lesson %}
+                            <a href="{% url 'lesson_play' next_lesson.pk %}" class="btn btn-outline-primary">
+                                Next<i class="bi bi-chevron-right me-1"></i>
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Video Player -->
+                {% if lesson.video_url %}
+                    <div class="video-container mb-4">
+                        <div class="ratio ratio-16x9">
+                            <iframe src="{{ lesson.video_url }}" title="{{ lesson.title }}" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+                        </div>
+                    </div>
+                {% endif %}
+
+                <!-- Lesson Content -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body">
+                        <h2 class="fw-bold mb-3">{{ lesson.title }}</h2>
+                        <div class="lesson-content">
+                            {{ lesson.content|safe }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lesson Actions -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                {% if not is_completed %}
+                                    <form method="post" action="{% url 'lesson_complete' lesson.pk %}" class="d-inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-success btn-lg">
+                                            <i class="bi bi-check-circle me-2"></i>Mark as Complete
+                                        </button>
+                                    </form>
+                                {% else %}
+                                    <span class="text-success fs-5">
+                                        <i class="bi bi-check-circle-fill me-2"></i>Lesson Completed!
+                                    </span>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 text-md-end mt-3 mt-md-0">
+                                <button class="btn btn-outline-secondary me-2" data-bs-toggle="modal" data-bs-target="#notesModal">
+                                    <i class="bi bi-journal-text me-1"></i>My Notes
+                                </button>
+                                {% if lesson.quiz %}
+                                    <a href="{% url 'quiz_take' lesson.quiz.pk %}" class="btn btn-warning">
+                                        <i class="bi bi-question-circle me-1"></i>Take Quiz
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabs for Additional Content -->
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <ul class="nav nav-tabs" id="lessonTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab">
+                                    <i class="bi bi-info-circle me-1"></i>Overview
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="resources-tab" data-bs-toggle="tab" data-bs-target="#resources" type="button" role="tab">
+                                    <i class="bi bi-download me-1"></i>Resources
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="discussion-tab" data-bs-toggle="tab" data-bs-target="#discussion" type="button" role="tab">
+                                    <i class="bi bi-chat-dots me-1"></i>Discussion
+                                </button>
+                            </li>
+                        </ul>
+                        <div class="tab-content pt-3" id="lessonTabsContent">
+                            <!-- Overview Tab -->
+                            <div class="tab-pane fade show active" id="overview" role="tabpanel">
+                                <h5 class="fw-bold mb-3">About this lesson</h5>
+                                <p class="text-muted">
+                                    This lesson is part of <strong>{{ course.title }}</strong>. 
+                                    You are making great progress! Keep up the good work.
+                                </p>
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <div class="p-3 bg-light rounded">
+                                            <i class="bi bi-play-circle text-primary me-2"></i>
+                                            <span>Video Lesson</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="p-3 bg-light rounded">
+                                            <i class="bi bi-clock text-success me-2"></i>
+                                            <span>{{ lesson.duration|default:"N/A" }} minutes</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="p-3 bg-light rounded">
+                                            <i class="bi bi-people text-info me-2"></i>
+                                            <span>{{ course.enrolled_count }} students</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Resources Tab -->
+                            <div class="tab-pane fade" id="resources" role="tabpanel">
+                                <h5 class="fw-bold mb-3">Downloadable Resources</h5>
+                                {% if lesson.resources.all %}
+                                    <div class="list-group">
+                                        {% for resource in lesson.resources.all %}
+                                            <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <i class="bi bi-file-earmark me-2"></i>
+                                                    {{ resource.name }}
+                                                </div>
+                                                <i class="bi bi-download text-muted"></i>
+                                            </a>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    <p class="text-muted">No resources available for this lesson.</p>
+                                {% endif %}
+                            </div>
+
+                            <!-- Discussion Tab -->
+                            <div class="tab-pane fade" id="discussion" role="tabpanel">
+                                <h5 class="fw-bold mb-3">Lesson Discussion</h5>
+                                
+                                <!-- Add Comment (coming soon) -->
+                                {% if user.is_authenticated %}
+                                    <div class="mb-4">
+                                        <div class="mb-3">
+                                            <textarea class="form-control" rows="3" placeholder="Discussion feature coming soon..." disabled></textarea>
+                                        </div>
+                                        <button type="button" class="btn btn-primary" disabled>
+                                            <i class="bi bi-send me-1"></i>Post Comment
+                                        </button>
+                                    </div>
+                                {% endif %}
+
+                                <!-- Comments List -->
+                                <div class="comment-section">
+                                    {% for comment in lesson_comments %}
+                                        <div class="comment">
+                                            {% if comment.user.profile.avatar %}
+                                                <img src="{{ comment.user.profile.avatar.url }}" alt="{{ comment.user.get_full_name }}" class="avatar me-3">
+                                            {% else %}
+                                                <div class="avatar bg-secondary text-white d-flex align-items-center justify-content-center me-3">
+                                                    {{ comment.user.get_full_name|first|upper }}
+                                                </div>
+                                            {% endif %}
+                                            <div class="comment-body">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <span class="comment-author">{{ comment.user.get_full_name|default:comment.user.username }}</span>
+                                                    <span class="comment-time">{{ comment.created_at|timesince }} ago</span>
+                                                </div>
+                                                <p class="comment-text mb-0">{{ comment.text }}</p>
+                                            </div>
+                                        </div>
+                                    {% empty %}
+                                        <p class="text-muted text-center py-4">No comments yet. Be the first to ask a question!</p>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Notes Modal -->
+<div class="modal fade" id="notesModal" tabindex="-1" aria-labelledby="notesModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="notesModalLabel">
+                    <i class="bi bi-journal-text me-2"></i>My Notes
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div>
+                    <div class="mb-3">
+                        <textarea class="form-control" rows="10" placeholder="Notes feature coming soon...">{{ user_note }}</textarea>
+                    </div>
+                    <div class="d-grid">
+                        <button type="button" class="btn btn-primary" disabled>
+                            <i class="bi bi-save me-1"></i>Save Notes
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

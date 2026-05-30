@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Course Management - LearnHub{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="fw-bold mb-1"><i class="bi bi-book me-2"></i>Course Management</h1>
+            <p class="text-secondary mb-0">View, search, and manage all courses on the platform</p>
+        </div>
+        <a href="{% url 'owner_dashboard' %}" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-left me-1"></i>Dashboard
+        </a>
+    </div>
+
+    <!-- Filters -->
+    <div class="d-flex flex-wrap gap-2 mb-4">
+        <a href="{% url 'owner_course_list' %}" class="btn btn-sm rounded-pill {% if not current_status %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+            All <span class="badge bg-light text-dark ms-1">{{ total_courses_count }}</span>
+        </a>
+        <a href="{% url 'owner_course_list' %}?status=published" class="btn btn-sm rounded-pill {% if current_status == 'published' %}btn-success{% else %}btn-outline-secondary{% endif %}">
+            <i class="bi bi-globe me-1"></i>Published <span class="badge bg-light text-dark ms-1">{{ published_count }}</span>
+        </a>
+        <a href="{% url 'owner_course_list' %}?status=draft" class="btn btn-sm rounded-pill {% if current_status == 'draft' %}btn-secondary{% else %}btn-outline-secondary{% endif %}">
+            <i class="bi bi-pencil me-1"></i>Drafts <span class="badge bg-light text-dark ms-1">{{ draft_count }}</span>
+        </a>
+    </div>
+
+    <!-- Search -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <form method="get" class="d-flex gap-2">
+                <input type="text" name="q" class="form-control apple-input" placeholder="Search by title or instructor..." value="{{ search_query }}">
+                <select name="category" class="form-select apple-input" style="max-width: 200px;">
+                    <option value="">All Categories</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat.slug }}" {% if current_category == cat.slug %}selected{% endif %}>{{ cat.name }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="btn btn-primary rounded-pill"><i class="bi bi-search"></i></button>
+                {% if current_status %}
+                <input type="hidden" name="status" value="{{ current_status }}">
+                {% endif %}
+            </form>
+        </div>
+    </div>
+
+    <!-- Courses Table -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            {% if courses %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Title</th>
+                            <th>Instructor</th>
+                            <th>Category</th>
+                            <th class="text-end">Price</th>
+                            <th class="text-end">Enrolled</th>
+                            <th>Rating</th>
+                            <th>Status</th>
+                            <th>Created</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for course in courses %}
+                        <tr>
+                            <td class="fw-semibold small">{{ course.title|truncatechars:45 }}</td>
+                            <td class="small">{{ course.instructor.get_full_name|default:course.instructor.username }}</td>
+                            <td><span class="badge bg-light text-dark">{{ course.category.name|default:"—" }}</span></td>
+                            <td class="text-end">M{{ course.price|floatformat:2 }}</td>
+                            <td class="text-end">{{ course.enrolled_count }}</td>
+                            <td>
+                                {% if course.review_count > 0 %}
+                                <span style="color: #ff9f0a;">
+                                    {% for i in "12345" %}
+                                        {% if forloop.counter <= course.avg_rating|floatformat:"0" %}
+                                        <i class="bi bi-star-fill"></i>
+                                        {% else %}
+                                        <i class="bi bi-star"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                </span>
+                                <span class="small text-secondary">({{ course.review_count }})</span>
+                                {% else %}
+                                <span class="text-secondary small">—</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge {% if course.is_published %}bg-success{% else %}bg-secondary{% endif %}">
+                                    {{ course.is_published|yesno:"Published,Draft" }}
+                                </span>
+                            </td>
+                            <td class="small text-secondary">{{ course.created_at|date:"M d, Y" }}</td>
+                            <td class="text-end">
+                                <div class="d-flex gap-1 justify-content-end">
+                                    <a href="{% url 'course_detail' course.slug %}" class="btn btn-sm btn-outline-primary rounded-pill" title="View">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <form method="post" action="{% url 'owner_course_delete' course.pk %}" class="d-inline" onsubmit="return confirm('Delete {{ course.title }}? This cannot be undone.')">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill" title="Delete">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% if is_paginated %}
+            <div class="d-flex justify-content-center py-3">
+                <nav>
+                    <ul class="pagination pagination-sm mb-0">
+                        {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}">Previous</a>
+                        </li>
+                        {% endif %}
+                        <li class="page-item disabled">
+                            <span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                        </li>
+                        {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}">Next</a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+            {% endif %}
+
+            {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-book display-4 text-secondary mb-3 d-block"></i>
+                <p class="text-secondary mb-0">No courses found.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
