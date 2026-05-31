@@ -1,4 +1,5 @@
 from django.db import models
+import uuid
 from accounts.models import User
 from courses.models import Course
 from lessons.models import Lesson
@@ -37,6 +38,82 @@ class Enrollment(models.Model):
         self.progress = (completed_lessons / total_lessons) * 100
         self.save()
         return self.progress
+
+    def course_quizzes(self):
+        from quizzes.models import Quiz
+        return Quiz.objects.filter(lesson__section__course=self.course).prefetch_related('questions')
+
+    def total_lessons_count(self):
+        return sum(section.lessons.count() for section in self.course.sections.all())
+
+    def completed_lessons_count(self):
+        return self.lesson_completions.count()
+
+    def lessons_complete(self):
+        total_lessons = self.total_lessons_count()
+        return total_lessons > 0 and self.completed_lessons_count() >= total_lessons
+
+    def quizzes_ready(self):
+        quizzes = list(self.course_quizzes())
+        return bool(quizzes) and all(quiz.questions.exists() for quiz in quizzes)
+
+    def passed_required_quizzes(self):
+        from quizzes.models import UserQuizAttempt
+        quizzes = list(self.course_quizzes())
+        if not quizzes or not self.quizzes_ready():
+            return False
+
+        for quiz in quizzes:
+            passed = UserQuizAttempt.objects.filter(
+                user=self.user,
+                quiz=quiz,
+                passed=True,
+                score__gte=quiz.pass_percentage,
+            ).exists()
+            if not passed:
+                return False
+        return True
+
+    def course_quiz_score(self):
+        from quizzes.models import UserQuizAttempt
+        quizzes = list(self.course_quizzes())
+        if not quizzes:
+            return 0
+
+        best_scores = []
+        for quiz in quizzes:
+            best_attempt = UserQuizAttempt.objects.filter(
+                user=self.user,
+                quiz=quiz,
+            ).order_by('-score').first()
+            best_scores.append(best_attempt.score if best_attempt else 0)
+
+        return sum(best_scores) / len(best_scores)
+
+    def can_receive_certificate(self):
+        return (
+            self.status == 'active'
+            and self.lessons_complete()
+            and self.quizzes_ready()
+            and self.passed_required_quizzes()
+            and self.course_quiz_score() >= 70
+        )
+
+    def complete_and_issue_certificate_if_eligible(self):
+        if not self.can_receive_certificate():
+            return None
+
+        self.completed = True
+        self.save(update_fields=['completed'])
+
+        from certificates.models import Certificate
+        certificate, _ = Certificate.objects.get_or_create(
+            enrollment=self,
+            defaults={
+                'certificate_code': str(uuid.uuid4()).replace('-', '').upper()[:16]
+            },
+        )
+        return certificate
 
 
 class LessonCompletion(models.Model):

@@ -1,6 +1,6 @@
 from django.views.generic import ListView, CreateView, UpdateView, DetailView, TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Q, Count, Avg, Prefetch
+from django.db.models import Q, Count, Avg, Prefetch, Case, When, IntegerField
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.contrib import messages
@@ -132,19 +132,49 @@ class CourseDetailView(DetailView):
         
         # Get enrollment status
         if self.request.user.is_authenticated:
-            context['is_enrolled'] = Enrollment.objects.filter(
+            enrollment = Enrollment.objects.filter(
                 user=self.request.user,
                 course=course
-            ).exists()
+            ).first()
+            context['is_enrolled'] = enrollment and enrollment.status == 'active'
+            context['has_pending_enrollment'] = enrollment and enrollment.status == 'pending'
         else:
             context['is_enrolled'] = False
+            context['has_pending_enrollment'] = False
+        
         
         # Get reviews
-        context['reviews'] = course.reviews.all()[:10]
+        reviews_qs = course.reviews.select_related('user').order_by('-created_at')
+        context['reviews'] = reviews_qs[:10]
+        context['review_count'] = reviews_qs.count()
         
         # Calculate average rating
-        context['average_rating'] = course.reviews.aggregate(Avg('rating'))['rating__avg'] or 0
-        context['review_count'] = course.reviews.count()
+        avg_rating = reviews_qs.aggregate(Avg('rating'))['rating__avg'] or 0
+        context['average_rating'] = avg_rating
+        
+        # Rating distribution
+        context['rating_counts'] = {
+            i: reviews_qs.filter(rating=i).count() for i in range(5, 0, -1)
+        }
+        
+        # Recommendation percentage (4+ star ratings)
+        if context['review_count'] > 0:
+            recommended = reviews_qs.filter(rating__gte=4).count()
+            context['recommendation_percentage'] = round((recommended / context['review_count']) * 100)
+        else:
+            context['recommendation_percentage'] = 0
+        
+        # Recent review count (last 30 days)
+        from django.utils import timezone
+        from datetime import timedelta
+        thirty_days_ago = timezone.now() - timedelta(days=30)
+        context['recent_review_count'] = reviews_qs.filter(created_at__gte=thirty_days_ago).count()
+        
+        # Current user's review (for edit/delete)
+        if self.request.user.is_authenticated:
+            context['user_review'] = reviews_qs.filter(user=self.request.user).first()
+        else:
+            context['user_review'] = None
         
         # Get first lesson for enrollment
         first_lesson = course.sections.first()
@@ -161,7 +191,8 @@ class CourseDetailView(DetailView):
         return context
 
 
-class EnrollCourseView(LoginRequiredMixin, DetailView):
+class EnrollFreeCourseView(LoginRequiredMixin, DetailView):
+    """Handles direct enrollment for free courses."""
     model = Course
     
     def post(self, request, *args, **kwargs):
@@ -176,9 +207,9 @@ class EnrollCourseView(LoginRequiredMixin, DetailView):
                 messages.info(request, 'Your enrollment is pending payment verification.')
             return redirect('course_detail', slug=course.slug)
         
-        # If course is free, enroll directly
+        # Only free courses can be enrolled via POST
         if course.price == 0:
-            enrollment = Enrollment.objects.create(
+            Enrollment.objects.create(
                 user=request.user,
                 course=course,
                 status='active'
@@ -190,5 +221,5 @@ class EnrollCourseView(LoginRequiredMixin, DetailView):
             messages.success(request, f'You are now enrolled in {course.title}!')
             return redirect('course_detail', slug=course.slug)
         else:
-            # For paid courses, redirect to payment page
+            # Paid courses go through payment form
             return redirect('enroll_course', slug=course.slug)

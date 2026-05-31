@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Quiz - {{ lesson.title }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="fw-bold mb-1">Quiz Questions</h1>
+            <p class="text-secondary mb-0">{{ course.title }} / {{ section.title }} / {{ lesson.title }}</p>
+        </div>
+        <a href="{% url 'curriculum' course.pk %}" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-left me-1"></i>Curriculum
+        </a>
+    </div>
+
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle me-2"></i>
+        Certificates are issued only after students complete all lessons and pass every course quiz with at least 70%.
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-5">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h2 class="h5 fw-bold mb-3">Add a Question</h2>
+                    <form method="post">
+                        {% csrf_token %}
+
+                        <div class="mb-3">
+                            <label class="form-label" for="{{ quiz_form.title.id_for_label }}">Quiz title</label>
+                            {{ quiz_form.title }}
+                            {{ quiz_form.title.errors }}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="{{ quiz_form.pass_percentage.id_for_label }}">Pass mark</label>
+                            {{ quiz_form.pass_percentage }}
+                            <div class="form-text">Minimum allowed pass mark is 70%.</div>
+                            {{ quiz_form.pass_percentage.errors }}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label" for="{{ question_form.text.id_for_label }}">Question</label>
+                            {{ question_form.text }}
+                            {{ question_form.text.errors }}
+                        </div>
+
+                        {{ choice_formset.management_form }}
+                        {{ choice_formset.non_form_errors }}
+                        <div class="d-grid gap-3">
+                            {% for form in choice_formset %}
+                                <div class="p-3 bg-light rounded">
+                                    <label class="form-label">Option {{ forloop.counter }}</label>
+                                    {{ form.text }}
+                                    <div class="form-check mt-2">
+                                        {{ form.is_correct }}
+                                        <label class="form-check-label" for="{{ form.is_correct.id_for_label }}">Correct answer</label>
+                                    </div>
+                                    {{ form.text.errors }}
+                                    {{ form.is_correct.errors }}
+                                </div>
+                            {% endfor %}
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100 mt-4">
+                            <i class="bi bi-plus-circle me-1"></i>Add Question
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h2 class="h5 fw-bold mb-0">Current Questions</h2>
+                        <span class="badge bg-primary">{{ quiz.questions.count }} total</span>
+                    </div>
+
+                    {% for question in quiz.questions.all %}
+                        <div class="border rounded p-3 mb-3">
+                            <div class="d-flex justify-content-between gap-3">
+                                <div>
+                                    <div class="fw-semibold mb-2">{{ question.order }}. {{ question.text }}</div>
+                                    <ol class="mb-0">
+                                        {% for choice in question.choices.all %}
+                                            <li class="{% if choice.is_correct %}text-success fw-semibold{% endif %}">
+                                                {{ choice.text }}
+                                                {% if choice.is_correct %}<span class="badge bg-success ms-1">Correct</span>{% endif %}
+                                            </li>
+                                        {% endfor %}
+                                    </ol>
+                                </div>
+                                <form method="post" action="{% url 'question_delete' question.pk %}" onsubmit="return confirm('Remove this question?')">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="empty-state py-4">
+                            <div class="empty-state-icon"><i class="bi bi-question-circle"></i></div>
+                            <h3>No questions yet</h3>
+                            <p class="text-muted">Add at least one question so students can pass this quiz and qualify for certificates.</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

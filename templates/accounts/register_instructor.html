@@ -1,15 +1,100 @@
 {% extends 'base.html' %}
-{% load crispy_forms_tags %}
+{% load static %}
+{% block title %}Become an Instructor - BopheloHub{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-6">
-        <h2>Instructor Registration</h2>
-        <form method="post">
-            {% csrf_token %}
-            {{ form|crispy }}
-            <button type="submit" class="btn btn-success">Create Account</button>
-        </form>
+<div class="auth-page">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-5">
+                <div class="auth-card fade-in">
+                    <div class="auth-header">
+                        <div class="auth-icon auth-icon-instructor">
+                            <i class="bi bi-chalkboard-teacher"></i>
+                        </div>
+                        <h1 class="auth-title">Become an Instructor</h1>
+                        <p class="auth-subtitle">Share your knowledge with the world</p>
+                    </div>
+                    <form method="post" class="auth-form" novalidate>
+                        {% csrf_token %}
+
+                        <div class="auth-field">
+                            <label for="{{ form.email.id_for_label }}" class="auth-label">
+                                <i class="bi bi-envelope"></i> Email
+                            </label>
+                            {{ form.email }}
+                            {% if form.email.errors %}
+                                <div class="auth-field-error">{{ form.email.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="auth-field">
+                                    <label for="{{ form.first_name.id_for_label }}" class="auth-label">
+                                        <i class="bi bi-person"></i> First Name
+                                    </label>
+                                    {{ form.first_name }}
+                                    {% if form.first_name.errors %}
+                                        <div class="auth-field-error">{{ form.first_name.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="auth-field">
+                                    <label for="{{ form.last_name.id_for_label }}" class="auth-label">
+                                        <i class="bi bi-person"></i> Last Name
+                                    </label>
+                                    {{ form.last_name }}
+                                    {% if form.last_name.errors %}
+                                        <div class="auth-field-error">{{ form.last_name.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="auth-field">
+                            <label for="{{ form.password1.id_for_label }}" class="auth-label">
+                                <i class="bi bi-lock"></i> Password
+                            </label>
+                            {{ form.password1 }}
+                            {% if form.password1.errors %}
+                                <div class="auth-field-error">{{ form.password1.errors.0 }}</div>
+                            {% endif %}
+                            {% if form.password1.help_text %}
+                                <ul class="auth-help-text">{{ form.password1.help_text|safe }}</ul>
+                            {% endif %}
+                        </div>
+
+                        <div class="auth-field">
+                            <label for="{{ form.password2.id_for_label }}" class="auth-label">
+                                <i class="bi bi-lock"></i> Confirm Password
+                            </label>
+                            {{ form.password2 }}
+                            {% if form.password2.errors %}
+                                <div class="auth-field-error">{{ form.password2.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="auth-notice">
+                            <i class="bi bi-info-circle-fill"></i>
+                            <span>After registration, you'll need to complete your instructor profile and verify your identity before publishing courses.</span>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary auth-submit w-100">
+                            <i class="bi bi-chalkboard-teacher"></i> Create Instructor Account
+                        </button>
+                    </form>
+
+                    <div class="auth-footer">
+                        <p>Already have an account? <a href="{% url 'login' %}">Log in</a></p>
+                        <p class="mb-0 mt-2">
+                            Want to learn? <a href="{% url 'register_student' %}">Sign up as Student</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}

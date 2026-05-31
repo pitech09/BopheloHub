@@ -13,6 +13,8 @@ from .views import (
     LessonDeleteView,
     ReorderLessonsView,
     ReorderSectionsView,
+    QuizManageView,
+    QuestionDeleteView,
 )
 
 urlpatterns = [
@@ -30,6 +32,8 @@ urlpatterns = [
     path('instructor/section/<int:section_pk>/lesson/create/', LessonCreateView.as_view(), name='lesson_create'),
     path('instructor/lesson/<int:pk>/edit/', LessonUpdateView.as_view(), name='lesson_update'),
     path('instructor/lesson/<int:pk>/delete/', LessonDeleteView.as_view(), name='lesson_delete'),
+    path('instructor/lesson/<int:lesson_pk>/quiz/', QuizManageView.as_view(), name='quiz_manage'),
+    path('instructor/question/<int:pk>/delete/', QuestionDeleteView.as_view(), name='question_delete'),
     
     # Reorder URLs (AJAX)
     path('instructor/section/<int:section_pk>/reorder/', ReorderLessonsView.as_view(), name='reorder_lessons'),

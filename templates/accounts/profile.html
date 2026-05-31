@@ -1,13 +1,338 @@
 {% extends 'base.html' %}
+{% load static %}
+{% block title %}My Profile - BopheloHub{% endblock %}
+
 {% block content %}
-<h1>Welcome, {{ user.first_name|default:user.email }}</h1>
-<p>Email: {{ user.email }}</p>
-<p>Instructor: {{ user.is_instructor }}</p>
-{% if user.is_instructor %}
-    {% if user.instructor_profile %}
-        <p>Status: {{ user.instructor_profile.get_status_display }}</p>
-    {% else %}
-        <a href="{% url 'instructor_apply' %}" class="btn btn-primary">Complete Instructor Profile</a>
-    {% endif %}
-{% endif %}
+<div class="profile-page">
+    <div class="container">
+
+        <!-- Profile Header -->
+        <div class="profile-header fade-in">
+            <div class="row align-items-center">
+                <div class="col-md-8 d-flex align-items-center gap-4">
+                    <!-- Avatar -->
+                    <div class="profile-avatar-wrapper">
+                        {% if user.profile_picture %}
+                            <img src="{{ user.profile_picture.url }}" alt="{{ user.get_full_name }}" class="profile-avatar">
+                        {% else %}
+                            <div class="profile-avatar profile-avatar-placeholder">
+                                {{ user.get_full_name|default:user.email|first|upper }}
+                            </div>
+                        {% endif %}
+                        <label for="id_profile_picture" class="avatar-edit-btn" title="Change photo">
+                            <i class="bi bi-camera-fill"></i>
+                        </label>
+                    </div>
+                    <div>
+                        <h1 class="profile-name">{{ user.get_full_name|default:"Welcome!" }}</h1>
+                        <p class="profile-email mb-1">{{ user.email }}</p>
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            {% if user.is_instructor and user.instructor_profile %}
+                                {% if user.instructor_profile.status == 'verified' %}
+                                    <span class="badge bg-success"><i class="bi bi-patch-check-fill me-1"></i>Verified Instructor</span>
+                                {% elif user.instructor_profile.status == 'pending' %}
+                                    <span class="badge bg-warning"><i class="bi bi-clock me-1"></i>Instructor (Pending)</span>
+                                {% elif user.instructor_profile.status == 'rejected' %}
+                                    <span class="badge bg-danger"><i class="bi bi-x-circle me-1"></i>Instructor (Rejected)</span>
+                                {% endif %}
+                            {% elif user.is_instructor %}
+                                <a href="{% url 'instructor_apply' %}" class="badge badge-link"><i class="bi bi-person-plus me-1"></i>Complete Instructor Profile</a>
+                            {% else %}
+                                <span class="badge bg-secondary"><i class="bi bi-person me-1"></i>Student</span>
+                            {% endif %}
+                            {% if user.bio %}
+                                <p class="profile-bio mt-2 mb-0 w-100">{{ user.bio }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                    <a href="{% url 'student_dashboard' %}" class="btn btn-outline-primary me-2">
+                        <i class="bi bi-book me-1"></i>My Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Row -->
+        <div class="row g-3 mb-4 fade-in">
+            <div class="col-md-3 col-6">
+                <div class="stat-card">
+                    <div class="stat-value">{{ enrollments|length }}</div>
+                    <div class="stat-label">Enrollments</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-card">
+                    <div class="stat-value">{{ active_enrollments }}</div>
+                    <div class="stat-label">Active Courses</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-card">
+                    <div class="stat-value">{{ completed_courses }}</div>
+                    <div class="stat-label">Completed</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-card">
+                    <div class="stat-value">{{ total_certificates }}</div>
+                    <div class="stat-label">Certificates</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Navigation -->
+        <ul class="nav nav-tabs profile-tabs mb-4 fade-in" id="profileTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="courses-tab" data-bs-toggle="tab" data-bs-target="#courses" type="button" role="tab">
+                    <i class="bi bi-collection-play me-1"></i>My Courses
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="certificates-tab" data-bs-toggle="tab" data-bs-target="#certificates" type="button" role="tab">
+                    <i class="bi bi-award me-1"></i>Certificates
+                    {% if certificates %}<span class="tab-badge">{{ certificates|length }}</span>{% endif %}
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="reviews-tab" data-bs-toggle="tab" data-bs-target="#reviews" type="button" role="tab">
+                    <i class="bi bi-star me-1"></i>My Reviews
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="settings-tab" data-bs-toggle="tab" data-bs-target="#settings" type="button" role="tab">
+                    <i class="bi bi-gear me-1"></i>Edit Profile
+                </button>
+            </li>
+        </ul>
+
+        <!-- Tab Content -->
+        <div class="tab-content fade-in" id="profileTabsContent">
+
+            <!-- Courses Tab -->
+            <div class="tab-pane fade show active" id="courses" role="tabpanel">
+                {% if enrollments %}
+                    <div class="row g-3">
+                        {% for enrollment in enrollments %}
+                            <div class="col-md-6 col-lg-4">
+                                <div class="card course-card h-100">
+                                    <div class="card-body d-flex flex-column">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <h5 class="card-title mb-0">{{ enrollment.course.title }}</h5>
+                                            <span class="badge {% if enrollment.status == 'active' %}bg-success{% elif enrollment.status == 'pending' %}bg-warning{% else %}bg-danger{% endif %} ms-2">
+                                                {{ enrollment.get_status_display }}
+                                            </span>
+                                        </div>
+                                        {% if enrollment.course.instructor %}
+                                            <p class="card-text small text-muted mb-2">
+                                                <i class="bi bi-person me-1"></i>{{ enrollment.course.instructor.get_full_name|default:enrollment.course.instructor.email }}
+                                            </p>
+                                        {% endif %}
+                                        {% if enrollment.status == 'active' %}
+                                            <div class="mt-auto">
+                                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                                    <small class="text-muted">Progress</small>
+                                                    <small class="fw-semibold">{{ enrollment.progress|floatformat:0 }}%</small>
+                                                </div>
+                                                <div class="progress mb-2" style="height: 6px;">
+                                                    <div class="progress-bar" role="progressbar" style="width: {{ enrollment.progress }}%;" aria-valuenow="{{ enrollment.progress }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                                </div>
+                                                <div class="d-flex justify-content-between">
+                                                    <small class="text-muted">
+                                                        {{ enrollment.completed_lessons_count }}/{{ enrollment.total_lessons_count }} lessons
+                                                    </small>
+                                                    {% if enrollment.completed %}
+                                                        <small class="text-success"><i class="bi bi-check-circle-fill"></i> Completed</small>
+                                                    {% endif %}
+                                                </div>
+                                                <a href="{% url 'course_detail' enrollment.course.slug %}" class="btn btn-primary btn-sm w-100 mt-2">
+                                                    <i class="bi bi-eye me-1"></i>View Course
+                                                </a>
+                                            </div>
+                                        {% elif enrollment.status == 'pending' %}
+                                            <p class="card-text small text-muted mt-2">Awaiting payment verification.</p>
+                                        {% else %}
+                                            <p class="card-text small text-muted mt-2">Enrollment rejected.</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        <div class="empty-state-icon"><i class="bi bi-book"></i></div>
+                        <h3>No Enrollments Yet</h3>
+                        <p class="text-muted">You haven't enrolled in any courses. Start learning today!</p>
+                        <a href="{% url 'course_list' %}" class="btn btn-primary">
+                            <i class="bi bi-collection-play me-1"></i>Browse Courses
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Certificates Tab -->
+            <div class="tab-pane fade" id="certificates" role="tabpanel">
+                {% if certificates %}
+                    <div class="row g-3">
+                        {% for cert in certificates %}
+                            <div class="col-md-6 col-lg-4">
+                                <div class="card certificate-card h-100">
+                                    <div class="card-body text-center d-flex flex-column">
+                                        <div class="cert-icon">
+                                            <i class="bi bi-award-fill"></i>
+                                        </div>
+                                        <h5 class="card-title mt-2">{{ cert.enrollment.course.title }}</h5>
+                                        <p class="card-text small text-muted">
+                                            <i class="bi bi-calendar3 me-1"></i>Issued: {{ cert.issued_at|date:"M d, Y" }}
+                                        </p>
+                                        <p class="card-text small text-muted">
+                                            <i class="bi bi-upc-scan me-1"></i>{{ cert.certificate_code }}
+                                        </p>
+                                        <div class="mt-auto">
+                                            <a href="{% url 'certificate_detail' cert.pk %}" class="btn btn-outline-primary btn-sm w-100">
+                                                <i class="bi bi-eye me-1"></i>View Certificate
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        <div class="empty-state-icon"><i class="bi bi-award"></i></div>
+                        <h3>No Certificates Yet</h3>
+                        <p class="text-muted">Complete a course and pass the quizzes to earn your certificate.</p>
+                        <a href="{% url 'course_list' %}" class="btn btn-primary">
+                            <i class="bi bi-collection-play me-1"></i>Browse Courses
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Reviews Tab -->
+            <div class="tab-pane fade" id="reviews" role="tabpanel">
+                {% if reviews %}
+                    <div class="row g-3">
+                        {% for review in reviews %}
+                            <div class="col-md-6">
+                                <div class="review-card">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <h6 class="mb-0">{{ review.course.title }}</h6>
+                                        <div class="rating">
+                                            {% for i in "12345" %}
+                                                {% if forloop.counter <= review.rating %}
+                                                    <i class="bi bi-star-fill"></i>
+                                                {% else %}
+                                                    <i class="bi bi-star"></i>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    {% if review.comment %}
+                                        <p class="card-text small mb-1">{{ review.comment }}</p>
+                                    {% endif %}
+                                    <small class="text-muted">{{ review.created_at|date:"M d, Y" }}</small>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        <div class="empty-state-icon"><i class="bi bi-star"></i></div>
+                        <h3>No Reviews Yet</h3>
+                        <p class="text-muted">You haven't reviewed any courses yet.</p>
+                        <a href="{% url 'course_list' %}" class="btn btn-primary">
+                            <i class="bi bi-collection-play me-1"></i>Browse Courses
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Edit Profile Tab -->
+            <div class="tab-pane fade" id="settings" role="tabpanel">
+                <div class="row justify-content-center">
+                    <div class="col-lg-8">
+                        <div class="card settings-card">
+                            <div class="card-body p-4">
+                                <h4 class="mb-3"><i class="bi bi-person-gear me-2"></i>Edit Profile</h4>
+                                <form method="post" enctype="multipart/form-data">
+                                    {% csrf_token %}
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label for="{{ form.first_name.id_for_label }}" class="form-label">First Name</label>
+                                            {{ form.first_name }}
+                                            {% if form.first_name.errors %}
+                                                <div class="text-danger small mt-1">{{ form.first_name.errors.0 }}</div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="{{ form.last_name.id_for_label }}" class="form-label">Last Name</label>
+                                            {{ form.last_name }}
+                                            {% if form.last_name.errors %}
+                                                <div class="text-danger small mt-1">{{ form.last_name.errors.0 }}</div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="col-12">
+                                            <label for="{{ form.bio.id_for_label }}" class="form-label">Bio</label>
+                                            {{ form.bio }}
+                                            {% if form.bio.errors %}
+                                                <div class="text-danger small mt-1">{{ form.bio.errors.0 }}</div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="col-12">
+                                            <label for="{{ form.profile_picture.id_for_label }}" class="form-label">Profile Picture</label>
+                                            <div class="d-flex align-items-center gap-3">
+                                                {% if user.profile_picture %}
+                                                    <img src="{{ user.profile_picture.url }}" alt="Current" class="avatar avatar-lg">
+                                                {% endif %}
+                                                <div class="flex-grow-1">
+                                                    {{ form.profile_picture }}
+                                                </div>
+                                            </div>
+                                            {% if form.profile_picture.errors %}
+                                                <div class="text-danger small mt-1">{{ form.profile_picture.errors.0 }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="mt-4">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="bi bi-check-lg me-1"></i>Save Changes
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Activate tab based on URL hash
+        const hash = window.location.hash;
+        if (hash) {
+            const triggerEl = document.querySelector(`button[data-bs-target="${hash}"]`);
+            if (triggerEl) {
+                const tab = new bootstrap.Tab(triggerEl);
+                tab.show();
+            }
+        }
+        // Update URL hash on tab change
+        const tabs = document.querySelectorAll('button[data-bs-toggle="tab"]');
+        tabs.forEach(tab => {
+            tab.addEventListener('shown.bs.tab', function(e) {
+                history.replaceState(null, null, e.target.getAttribute('data-bs-target'));
+            });
+        });
+    });
+</script>
 {% endblock %}

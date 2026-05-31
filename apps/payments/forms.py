@@ -8,14 +8,11 @@ class PaymentUploadForm(forms.ModelForm):
         fields = ['reference_number', 'screenshot', 'amount']
         widgets = {
             'reference_number': forms.TextInput(attrs={
-                'placeholder': 'Enter transaction/reference number',
+                'placeholder': 'e.g. BOP-123456789',
+                'autocomplete': 'off',
                 'class': 'apple-input',
             }),
-            'amount': forms.NumberInput(attrs={
-                'placeholder': 'Amount paid',
-                'class': 'apple-input',
-                'step': '0.01',
-            }),
+            'amount': forms.HiddenInput(),
             'screenshot': forms.FileInput(attrs={
                 'class': 'apple-file-input',
                 'accept': 'image/*',
@@ -27,4 +24,4 @@ class PaymentUploadForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         if self.course:
             self.fields['amount'].initial = self.course.price
-            self.fields['amount'].widget.attrs['readonly'] = True
+            self.fields['reference_number'].required = True

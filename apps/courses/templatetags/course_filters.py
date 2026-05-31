@@ -34,3 +34,14 @@ def rating_percentage(course, rating_value):
     
     rating_count = course.reviews.filter(rating=rating_value).count()
     return round((rating_count / total_reviews) * 100)
+
+
+@register.filter(name='get_item')
+def get_item(dictionary, key):
+    """Get an item from a dictionary by key."""
+    if dictionary is None:
+        return 0
+    try:
+        return dictionary.get(key, 0)
+    except (AttributeError, TypeError):
+        return 0

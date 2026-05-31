@@ -14,7 +14,6 @@ from notifications.models import Notification
 from payments.models import Payment
 from payments.forms import PaymentUploadForm
 from instructors.mixins import InstructorRequiredMixin
-import uuid
 
 
 class StudentDashboardView(LoginRequiredMixin, ListView):
@@ -102,29 +101,21 @@ class CompleteEnrollmentView(LoginRequiredMixin, DetailView):
         enrollment = get_object_or_404(Enrollment, pk=self.kwargs['pk'], user=request.user)
         course = enrollment.course
         
-        # Check if all lessons are completed
-        total_lessons = sum(section.lessons.count() for section in course.sections.all())
-        completed_lessons = LessonCompletion.objects.filter(enrollment=enrollment).count()
-        
-        if completed_lessons >= total_lessons and total_lessons > 0:
-            # Mark enrollment as completed
-            enrollment.completed = True
-            enrollment.save()
-            
-            # Generate certificate if not exists
-            if not hasattr(enrollment, 'certificate'):
-                certificate = Certificate.objects.create(
-                    enrollment=enrollment,
-                    certificate_code=str(uuid.uuid4()).replace('-', '').upper()[:16]
-                )
+        certificate = enrollment.complete_and_issue_certificate_if_eligible()
+        if certificate:
             
             # Send notification
             Notification.objects.create(
                 user=request.user,
-                message=f'Congratulations! You have completed {course.title}!'
+                message=f'Congratulations! You passed "{course.title}" with at least 70% and your certificate is ready.'
             )
             
-            return redirect('certificate_detail', pk=enrollment.pk)
+            return redirect('certificates:certificate_detail', pk=certificate.pk)
+
+        if not enrollment.quizzes_ready():
+            messages.warning(request, 'This course is not certificate-ready yet. The instructor must add quiz questions first.')
+        elif not enrollment.passed_required_quizzes():
+            messages.warning(request, 'Complete all lessons and pass every course quiz with at least 70% to receive your certificate.')
         
         return redirect('student_dashboard')
 
@@ -140,7 +131,12 @@ class EnrollWithPaymentView(LoginRequiredMixin, CreateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['course'] = self.course
+        course = self.course
+        context['course'] = course
+        context['total_lessons'] = sum(
+            section.lessons.count() for section in course.sections.all()
+        )
+        context['enrolled_count'] = course.enrollments.count()
         return context
 
     def get_form_kwargs(self):
@@ -161,10 +157,11 @@ class EnrollWithPaymentView(LoginRequiredMixin, CreateView):
             messages.info(self.request, 'You are already enrolled in this course.')
             return redirect('course_detail', slug=self.course.slug)
 
-        # Save payment
+        # Save payment — NEVER trust the submitted amount
         payment = form.save(commit=False)
         payment.user = self.request.user
         payment.course = self.course
+        payment.amount = self.course.price  # Server-authoritative price
         payment.status = 'pending'
         payment.save()
 

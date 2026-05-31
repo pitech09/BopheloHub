@@ -1,0 +1,1135 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Enroll in {{ course.title }} - BopheloHub{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ──────────────────────────────────────────────
+   Payment Page — Apple-Inspired Design
+   ────────────────────────────────────────────── */
+.payment-page {
+    background-color: #F5F5F7;
+    min-height: calc(100vh - 100px);
+    padding: 40px 0 80px;
+}
+
+/* Layout wrapper */
+.payment-layout {
+    max-width: 1060px;
+    margin: 0 auto;
+    padding: 0 24px;
+}
+
+.payment-grid {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 32px;
+    align-items: start;
+}
+
+@media (max-width: 900px) {
+    .payment-grid {
+        grid-template-columns: 1fr;
+    }
+    .payment-page {
+        padding: 24px 0 60px;
+    }
+}
+
+@media (max-width: 480px) {
+    .payment-layout {
+        padding: 0 16px;
+    }
+    .payment-grid {
+        gap: 24px;
+    }
+}
+
+/* ─── Breadcrumb ─── */
+.payment-breadcrumb {
+    margin-bottom: 32px;
+}
+
+.payment-breadcrumb .breadcrumb {
+    background: none;
+    padding: 0;
+    margin: 0;
+    font-size: 0.8125rem;
+    letter-spacing: -0.01em;
+}
+
+.payment-breadcrumb .breadcrumb-item {
+    color: #6E6E73;
+}
+
+.payment-breadcrumb .breadcrumb-item + .breadcrumb-item::before {
+    color: #C7C7CC;
+    content: "›";
+    font-size: 1.1em;
+    padding: 0 6px;
+}
+
+.payment-breadcrumb .breadcrumb-item a {
+    color: #6E6E73;
+    text-decoration: none;
+    transition: color 200ms ease;
+}
+
+.payment-breadcrumb .breadcrumb-item a:hover {
+    color: #0071E3;
+    text-decoration: none;
+}
+
+.payment-breadcrumb .breadcrumb-item.active {
+    color: #1D1D1F;
+    font-weight: 500;
+}
+
+/* ─── Cards ─── */
+.apple-card {
+    background: #FFFFFF;
+    border-radius: 20px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.03);
+    overflow: hidden;
+    transition: box-shadow 250ms ease;
+}
+
+.apple-card:hover {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.apple-card-body {
+    padding: 32px;
+}
+
+@media (max-width: 480px) {
+    .apple-card-body {
+        padding: 24px 20px;
+    }
+}
+
+/* ─── Form Header ─── */
+.form-header {
+    margin-bottom: 28px;
+}
+
+.form-header h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    color: #1D1D1F;
+    margin: 0 0 6px;
+}
+
+.form-header p {
+    font-size: 0.875rem;
+    color: #6E6E73;
+    margin: 0;
+    line-height: 1.5;
+}
+
+/* ─── Read-only Pricing Card ─── */
+.pricing-card {
+    background: #F5F5F7;
+    border-radius: 16px;
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 28px;
+    border: 1px solid #E8E8ED;
+}
+
+.pricing-card-label {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.pricing-card-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: #0071E3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.pricing-card-icon svg {
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: #FFFFFF;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.pricing-card-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.pricing-card-label-text {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: #6E6E73;
+    letter-spacing: -0.01em;
+}
+
+.pricing-card-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1D1D1F;
+    letter-spacing: -0.03em;
+    line-height: 1.2;
+}
+
+/* ─── Form Fields ─── */
+.apple-field {
+    margin-bottom: 24px;
+}
+
+.apple-field:last-of-type {
+    margin-bottom: 0;
+}
+
+.apple-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #1D1D1F;
+    letter-spacing: -0.01em;
+    margin-bottom: 8px;
+}
+
+.apple-label svg {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: #6E6E73;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    flex-shrink: 0;
+}
+
+.apple-input {
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 0.9375rem;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
+    color: #1D1D1F;
+    background: #FFFFFF;
+    border: 1.5px solid #D2D2D7;
+    border-radius: 12px;
+    outline: none;
+    transition: border-color 200ms ease, box-shadow 200ms ease;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.apple-input:focus {
+    border-color: #0071E3;
+    box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.15);
+}
+
+.apple-input::placeholder {
+    color: #8E8E93;
+}
+
+.apple-input.error {
+    border-color: #FF3B30;
+}
+
+.apple-input.error:focus {
+    box-shadow: 0 0 0 3px rgba(255, 59, 48, 0.15);
+}
+
+.apple-hint {
+    font-size: 0.75rem;
+    color: #8E8E93;
+    margin-top: 6px;
+    margin-bottom: 0;
+}
+
+.apple-error {
+    font-size: 0.75rem;
+    color: #FF3B30;
+    margin-top: 6px;
+    margin-bottom: 0;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* ─── Payment Instructions (Timeline) ─── */
+.instructions-card {
+    background: #F5F5F7;
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 28px;
+    border: 1px solid #E8E8ED;
+}
+
+.instructions-title {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #1D1D1F;
+    letter-spacing: -0.01em;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.instructions-title svg {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: #0071E3;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.instruction-step {
+    display: flex;
+    gap: 14px;
+    position: relative;
+    padding-bottom: 20px;
+}
+
+.instruction-step:last-child {
+    padding-bottom: 0;
+}
+
+/* Connecting line */
+.instruction-step:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 30px;
+    bottom: 0;
+    width: 2px;
+    background: #D2D2D7;
+    border-radius: 2px;
+}
+
+.instruction-step-number {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #0071E3;
+    color: #FFFFFF;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 1;
+}
+
+.instruction-step-content {
+    flex: 1;
+    padding-top: 4px;
+}
+
+.instruction-step-content strong {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #1D1D1F;
+    margin-bottom: 2px;
+}
+
+.instruction-step-content p {
+    font-size: 0.8125rem;
+    color: #6E6E73;
+    margin: 0;
+    line-height: 1.5;
+}
+
+.instruction-step-content .bank-details {
+    display: inline-block;
+    font-family: 'SF Mono', 'Menlo', monospace;
+    font-size: 0.8125rem;
+    color: #1D1D1F;
+    background: #FFFFFF;
+    padding: 6px 12px;
+    border-radius: 8px;
+    margin-top: 4px;
+    border: 1px solid #E8E8ED;
+}
+
+/* ─── Upload Area ─── */
+.upload-area {
+    position: relative;
+    border: 2px dashed #D2D2D7;
+    border-radius: 16px;
+    padding: 32px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 250ms ease, background-color 250ms ease;
+    background: #FAFAFA;
+}
+
+.upload-area:hover {
+    border-color: #0071E3;
+    background: rgba(0, 113, 227, 0.03);
+}
+
+.upload-area.dragover {
+    border-color: #0071E3;
+    background: rgba(0, 113, 227, 0.06);
+}
+
+.upload-area.has-file {
+    border-color: #30D158;
+    border-style: solid;
+    background: rgba(48, 209, 88, 0.04);
+}
+
+.upload-icon {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto 14px;
+    border-radius: 50%;
+    background: #E8E8ED;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 250ms ease;
+}
+
+.upload-area:hover .upload-icon {
+    background: rgba(0, 113, 227, 0.12);
+}
+
+.upload-area.has-file .upload-icon {
+    background: rgba(48, 209, 88, 0.15);
+}
+
+.upload-icon svg {
+    width: 22px;
+    height: 22px;
+    fill: none;
+    stroke: #6E6E73;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: stroke 250ms ease;
+}
+
+.upload-area:hover .upload-icon svg {
+    stroke: #0071E3;
+}
+
+.upload-area.has-file .upload-icon svg {
+    stroke: #30D158;
+}
+
+.upload-title {
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: #1D1D1F;
+    margin: 0 0 4px;
+}
+
+.upload-hint {
+    font-size: 0.8125rem;
+    color: #8E8E93;
+    margin: 0;
+}
+
+.upload-filename {
+    font-size: 0.8125rem;
+    color: #30D158;
+    font-weight: 500;
+    margin: 8px 0 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.upload-filename svg {
+    width: 14px;
+    height: 14px;
+    fill: none;
+    stroke: #30D158;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* Preview */
+.upload-preview {
+    margin-top: 14px;
+    display: none;
+}
+
+.upload-preview img {
+    max-width: 100%;
+    max-height: 180px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    object-fit: cover;
+}
+
+.upload-area.has-file .upload-preview {
+    display: block;
+}
+
+.upload-input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    z-index: 2;
+}
+
+/* ─── Buttons ─── */
+.apple-btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    padding: 14px 24px;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
+    letter-spacing: -0.01em;
+    color: #FFFFFF;
+    background: #0071E3;
+    border: none;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: background 200ms ease, transform 200ms ease, box-shadow 200ms ease;
+    -webkit-appearance: none;
+    appearance: none;
+    text-decoration: none;
+}
+
+.apple-btn-primary:hover:not(:disabled) {
+    background: #0066CC;
+    box-shadow: 0 4px 14px rgba(0, 113, 227, 0.25);
+    transform: translateY(-1px);
+    text-decoration: none;
+    color: #FFFFFF;
+}
+
+.apple-btn-primary:active:not(:disabled) {
+    transform: scale(0.98);
+    box-shadow: none;
+}
+
+.apple-btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.apple-btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 12px 24px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
+    letter-spacing: -0.01em;
+    color: #6E6E73;
+    background: transparent;
+    border: 1.5px solid #D2D2D7;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: border-color 200ms ease, color 200ms ease;
+    -webkit-appearance: none;
+    appearance: none;
+    text-decoration: none;
+}
+
+.apple-btn-secondary:hover {
+    border-color: #1D1D1F;
+    color: #1D1D1F;
+    text-decoration: none;
+}
+
+.apple-btn-secondary:active {
+    transform: scale(0.98);
+}
+
+/* Loading spinner */
+.spinner {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    border: 2.5px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #FFFFFF;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Button group */
+.button-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 28px;
+    padding-top: 28px;
+    border-top: 1px solid #E8E8ED;
+}
+
+/* ─── Course Summary Card (Apple Product Card) ─── */
+.course-summary-card {
+    background: #FFFFFF;
+    border-radius: 20px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.03);
+    overflow: hidden;
+    position: sticky;
+    top: 90px;
+}
+
+.course-summary-thumbnail {
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    object-fit: cover;
+    display: block;
+}
+
+.course-summary-placeholder {
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    background: #F5F5F7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.course-summary-placeholder svg {
+    width: 48px;
+    height: 48px;
+    fill: none;
+    stroke: #C7C7CC;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.course-summary-body {
+    padding: 24px;
+}
+
+.course-summary-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: #1D1D1F;
+    margin: 0 0 4px;
+    line-height: 1.3;
+}
+
+.course-summary-instructor {
+    font-size: 0.8125rem;
+    color: #6E6E73;
+    margin: 0 0 16px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.course-summary-instructor svg {
+    width: 14px;
+    height: 14px;
+    fill: none;
+    stroke: #8E8E93;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    flex-shrink: 0;
+}
+
+.course-summary-divider {
+    height: 1px;
+    background: #E8E8ED;
+    margin: 0 0 12px;
+}
+
+.course-summary-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.course-summary-stat {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.course-summary-stat svg {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: #8E8E93;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    flex-shrink: 0;
+}
+
+.course-summary-stat-label {
+    font-size: 0.8125rem;
+    color: #6E6E73;
+    flex: 1;
+}
+
+.course-summary-stat-value {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #1D1D1F;
+}
+
+.course-summary-price-area {
+    background: #F5F5F7;
+    border-radius: 12px;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.course-summary-price-label {
+    font-size: 0.8125rem;
+    color: #6E6E73;
+}
+
+.course-summary-price-amount {
+    font-size: 1.375rem;
+    font-weight: 700;
+    color: #1D1D1F;
+    letter-spacing: -0.03em;
+}
+
+.course-summary-price-free {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #30D158;
+}
+
+/* ─── Page Title ─── */
+.page-title-area {
+    margin-bottom: 32px;
+}
+
+.page-title-area h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    color: #1D1D1F;
+    margin: 0 0 6px;
+}
+
+.page-title-area p {
+    font-size: 0.9375rem;
+    color: #6E6E73;
+    margin: 0;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="payment-page">
+    <div class="payment-layout">
+
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb" class="payment-breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'course_list' %}">Courses</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'course_detail' course.slug %}">{{ course.title }}</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Enroll & Pay</li>
+            </ol>
+        </nav>
+
+        <div class="payment-grid">
+
+            <!-- ─── LEFT COLUMN: Payment Form ─── -->
+            <div>
+                <div class="page-title-area">
+                    <h1>Complete Your Enrollment</h1>
+                    <p>Submit your payment details to enroll. Access is granted once payment is verified.</p>
+                </div>
+
+                <div class="apple-card">
+                    <div class="apple-card-body">
+
+                        <form method="post" enctype="multipart/form-data" id="payment-form" novalidate>
+                            {% csrf_token %}
+
+                            <!-- Read-only Pricing Card (replaces editable amount input) -->
+                            <div class="pricing-card">
+                                <div class="pricing-card-label">
+                                    <div class="pricing-card-icon">
+                                        <svg viewBox="0 0 24 24">
+                                            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                                        </svg>
+                                    </div>
+                                    <div class="pricing-card-text">
+                                        <span class="pricing-card-label-text">Course Fee</span>
+                                        <span class="pricing-card-value">
+                                            {% if course.price == 0 %}
+                                                Free
+                                            {% else %}
+                                                M{{ course.price }}
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Hidden amount input stores the price for the form -->
+                            {{ form.amount }}
+
+                            <!-- Payment Instructions (Apple-style timeline) -->
+                            <div class="instructions-card">
+                                <div class="instructions-title">
+                                    <svg viewBox="0 0 24 24">
+                                        <circle cx="12" cy="12" r="10"/>
+                                        <line x1="12" y1="16" x2="12" y2="12"/>
+                                        <line x1="12" y1="8" x2="12.01" y2="8"/>
+                                    </svg>
+                                    Payment Instructions
+                                </div>
+
+                                <div class="instruction-step">
+                                    <div class="instruction-step-number">1</div>
+                                    <div class="instruction-step-content">
+                                        <strong>Make Payment</strong>
+                                        <p>Transfer <strong>M{{ course.price }}</strong> to the account below:</p>
+                                        <span class="bank-details">Bophelo Bank · 1234567890 · BH E-Learning</span>
+                                    </div>
+                                </div>
+
+                                <div class="instruction-step">
+                                    <div class="instruction-step-number">2</div>
+                                    <div class="instruction-step-content">
+                                        <strong>Save Your Receipt</strong>
+                                        <p>Take a screenshot or save the payment confirmation as proof of payment.</p>
+                                    </div>
+                                </div>
+
+                                <div class="instruction-step">
+                                    <div class="instruction-step-number">3</div>
+                                    <div class="instruction-step-content">
+                                        <strong>Submit Below</strong>
+                                        <p>Enter the transaction reference number and upload your payment screenshot. You'll get access once verified.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Transaction Reference -->
+                            <div class="apple-field">
+                                <label for="{{ form.reference_number.id_for_label }}" class="apple-label">
+                                    <svg viewBox="0 0 24 24">
+                                        <rect x="2" y="6" width="20" height="12" rx="2"/>
+                                        <path d="M6 12h4"/>
+                                        <path d="M14 12h4"/>
+                                    </svg>
+                                    Transaction Reference
+                                </label>
+                                {{ form.reference_number }}
+                                <p class="apple-hint">The reference number from your payment receipt or bank notification.</p>
+                                {% if form.reference_number.errors %}
+                                    <p class="apple-error">
+                                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#FF3B30" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="12" cy="12" r="10"/>
+                                            <line x1="15" y1="9" x2="9" y2="15"/>
+                                            <line x1="9" y1="9" x2="15" y2="15"/>
+                                        </svg>
+                                        {{ form.reference_number.errors.0 }}
+                                    </p>
+                                {% endif %}
+                            </div>
+
+                            <!-- Payment Screenshot Upload -->
+                            <div class="apple-field">
+                                <label for="{{ form.screenshot.id_for_label }}" class="apple-label">
+                                    <svg viewBox="0 0 24 24">
+                                        <rect x="3" y="3" width="18" height="18" rx="2"/>
+                                        <circle cx="8.5" cy="8.5" r="1.5"/>
+                                        <path d="M21 15l-5-5L5 21"/>
+                                    </svg>
+                                    Payment Screenshot
+                                </label>
+                                <div class="upload-area" id="upload-area">
+                                    <input type="file" name="{{ form.screenshot.html_name }}" id="{{ form.screenshot.id_for_label }}" accept="image/*" class="upload-input" />
+                                    <div class="upload-icon" id="upload-icon">
+                                        <svg viewBox="0 0 24 24">
+                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                            <polyline points="17 8 12 3 7 8"/>
+                                            <line x1="12" y1="3" x2="12" y2="15"/>
+                                        </svg>
+                                    </div>
+                                    <p class="upload-title" id="upload-title">Upload payment screenshot</p>
+                                    <p class="upload-hint">Tap to browse &mdash; JPEG, PNG, or HEIC</p>
+                                    <p class="upload-filename" id="upload-filename" style="display:none;">
+                                        <svg viewBox="0 0 24 24">
+                                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                                            <polyline points="22 4 12 14.01 9 11.01"/>
+                                        </svg>
+                                        <span id="filename-text"></span>
+                                    </p>
+                                    <div class="upload-preview" id="upload-preview">
+                                        <img id="preview-image" src="" alt="Payment screenshot preview" />
+                                    </div>
+                                </div>
+                                {% if form.screenshot.errors %}
+                                    <p class="apple-error">
+                                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#FF3B30" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="12" cy="12" r="10"/>
+                                            <line x1="15" y1="9" x2="9" y2="15"/>
+                                            <line x1="9" y1="9" x2="15" y2="15"/>
+                                        </svg>
+                                        {{ form.screenshot.errors.0 }}
+                                    </p>
+                                {% endif %}
+                            </div>
+
+                            <!-- Buttons -->
+                            <div class="button-group">
+                                <button type="submit" class="apple-btn-primary" id="submit-btn">
+                                    <span id="submit-text">Submit Payment</span>
+                                    <span id="submit-spinner" style="display:none;">
+                                        <span class="spinner"></span>
+                                    </span>
+                                </button>
+                                <a href="{% url 'course_detail' course.slug %}" class="apple-btn-secondary">
+                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <line x1="19" y1="12" x2="5" y2="12"/>
+                                        <polyline points="12 19 5 12 12 5"/>
+                                    </svg>
+                                    Back to Course
+                                </a>
+                            </div>
+
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ─── RIGHT COLUMN: Course Summary Card ─── -->
+            <div>
+                <div class="course-summary-card">
+                    {% if course.thumbnail %}
+                        <img src="{{ course.thumbnail.url }}" alt="{{ course.title }}" class="course-summary-thumbnail">
+                    {% else %}
+                        <div class="course-summary-placeholder">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                            </svg>
+                        </div>
+                    {% endif %}
+                    <div class="course-summary-body">
+                        <h2 class="course-summary-title">{{ course.title }}</h2>
+                        <p class="course-summary-instructor">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                <circle cx="12" cy="7" r="4"/>
+                            </svg>
+                            {{ course.instructor.get_full_name|default:course.instructor.email }}
+                        </p>
+
+                        <div class="course-summary-divider"></div>
+
+                        <div class="course-summary-stats">
+                            <div class="course-summary-stat">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                                    <path d="M2 17l10 5 10-5"/>
+                                    <path d="M2 12l10 5 10-5"/>
+                                </svg>
+                                <span class="course-summary-stat-label">Sections</span>
+                                <span class="course-summary-stat-value">{{ course.sections.count }}</span>
+                            </div>
+                            <div class="course-summary-stat">
+                                <svg viewBox="0 0 24 24">
+                                    <polygon points="5 3 19 12 5 21 5 3"/>
+                                </svg>
+                                <span class="course-summary-stat-label">Lessons</span>
+                                <span class="course-summary-stat-value">{{ total_lessons }}</span>
+                            </div>
+                            <div class="course-summary-stat">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                    <circle cx="9" cy="7" r="4"/>
+                                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                                </svg>
+                                <span class="course-summary-stat-label">Students</span>
+                                <span class="course-summary-stat-value">{{ enrolled_count }}</span>
+                            </div>
+                        </div>
+
+                        <div class="course-summary-price-area">
+                            <span class="course-summary-price-label">Total</span>
+                            {% if course.price == 0 %}
+                                <span class="course-summary-price-free">Free</span>
+                            {% else %}
+                                <span class="course-summary-price-amount">M{{ course.price }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+    'use strict';
+
+    const form = document.getElementById('payment-form');
+    const submitBtn = document.getElementById('submit-btn');
+    const submitText = document.getElementById('submit-text');
+    const submitSpinner = document.getElementById('submit-spinner');
+
+    const fileInput = document.querySelector('.upload-input');
+    const uploadArea = document.getElementById('upload-area');
+    const uploadIcon = document.getElementById('upload-icon');
+    const uploadTitle = document.getElementById('upload-title');
+    const uploadFilename = document.getElementById('upload-filename');
+    const filenameText = document.getElementById('filename-text');
+    const uploadPreview = document.getElementById('upload-preview');
+    const previewImage = document.getElementById('preview-image');
+
+    // ── Upload: drag-and-drop + file selection ──
+    if (fileInput) {
+        // File selected via click
+        fileInput.addEventListener('change', function(e) {
+            handleFile(this.files[0]);
+        });
+
+        // Drag events
+        ['dragenter', 'dragover'].forEach(function(event) {
+            uploadArea.addEventListener(event, function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                uploadArea.classList.add('dragover');
+            });
+        });
+
+        ['dragleave', 'drop'].forEach(function(event) {
+            uploadArea.addEventListener(event, function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                uploadArea.classList.remove('dragover');
+                if (event.type === 'drop' && e.dataTransfer.files.length) {
+                    fileInput.files = e.dataTransfer.files;
+                    handleFile(e.dataTransfer.files[0]);
+                }
+            });
+        });
+    }
+
+    function handleFile(file) {
+        if (!file) {
+            resetUpload();
+            return;
+        }
+
+        // Show success state
+        uploadArea.classList.add('has-file');
+        uploadTitle.textContent = 'File selected';
+        uploadIcon.querySelector('svg').innerHTML =
+            '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>' +
+            '<polyline points="22 4 12 14.01 9 11.01"/>';
+
+        filenameText.textContent = file.name;
+        uploadFilename.style.display = 'flex';
+
+        // Show image preview
+        if (file.type && file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewImage.src = e.target.result;
+                uploadPreview.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        } else {
+            uploadPreview.style.display = 'none';
+        }
+    }
+
+    function resetUpload() {
+        uploadArea.classList.remove('has-file');
+        uploadTitle.textContent = 'Upload payment screenshot';
+        uploadIcon.querySelector('svg').innerHTML =
+            '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>' +
+            '<polyline points="17 8 12 3 7 8"/>' +
+            '<line x1="12" y1="3" x2="12" y2="15"/>';
+        uploadFilename.style.display = 'none';
+        uploadPreview.style.display = 'none';
+        previewImage.src = '';
+    }
+
+    // ── Submit: loading state / disable ──
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            // Basic validation
+            const refInput = document.querySelector('input[name="reference_number"]');
+            if (refInput && !refInput.value.trim()) {
+                e.preventDefault();
+                refInput.classList.add('error');
+                refInput.focus();
+                return;
+            }
+
+            if (fileInput && !fileInput.files.length) {
+                e.preventDefault();
+                uploadArea.classList.add('has-file');
+                uploadArea.style.borderColor = '#FF3B30';
+                setTimeout(function() {
+                    uploadArea.style.borderColor = '';
+                }, 2000);
+                return;
+            }
+
+            // Disable button and show spinner
+            submitBtn.disabled = true;
+            submitText.textContent = 'Processing Payment...';
+            submitSpinner.style.display = 'inline';
+
+            // Remove error states
+            if (refInput) refInput.classList.remove('error');
+        });
+
+        // Clear error state on input
+        const refInput = document.querySelector('input[name="reference_number"]');
+        if (refInput) {
+            refInput.addEventListener('input', function() {
+                this.classList.remove('error');
+            });
+        }
+    }
+})();
+</script>
+{% endblock %}

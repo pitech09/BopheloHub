@@ -1,23 +1,62 @@
 {% extends 'base.html' %}
 {% block content %}
-<h2>Curriculum for "{{ course.title }}"</h2>
-<a href="{% url 'section_create' course.pk %}" class="btn btn-sm btn-secondary mb-3">Add Section</a>
-{% for section in sections %}
-    <div class="card mb-2">
-        <div class="card-header d-flex justify-content-between">
-            <strong>{{ section.title }}</strong>
-            <a href="{% url 'lesson_create' section.pk %}" class="btn btn-sm btn-primary">+ Add Lesson</a>
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">Curriculum for "{{ course.title }}"</h2>
+            <p class="text-secondary mb-0">Add lessons and create quiz questions. Students need 70% or higher before certificates are issued.</p>
         </div>
-        <ul class="list-group list-group-flush">
-            {% for lesson in section.lessons.all %}
-                <li class="list-group-item">{{ lesson.order }}. {{ lesson.title }}</li>
-            {% empty %}
-                <li class="list-group-item text-muted">No lessons yet.</li>
-            {% endfor %}
-        </ul>
+        <a href="{% url 'section_create' course.pk %}" class="btn btn-sm btn-secondary">
+            <i class="bi bi-plus-circle me-1"></i>Add Section
+        </a>
     </div>
-{% empty %}
-    <p>No sections yet. Add one to begin building your curriculum.</p>
-{% endfor %}
-<a href="{% url 'instructor_dashboard' %}" class="btn btn-link mt-3">&larr; Back to Dashboard</a>
+
+    {% for section in sections %}
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <strong>{{ section.title }}</strong>
+                <a href="{% url 'lesson_create' section.pk %}" class="btn btn-sm btn-primary">
+                    <i class="bi bi-plus-circle me-1"></i>Add Lesson
+                </a>
+            </div>
+            <ul class="list-group list-group-flush">
+                {% for lesson in section.lessons.all %}
+                    <li class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center gap-3">
+                            <div>
+                                <div class="fw-semibold">{{ lesson.order }}. {{ lesson.title }}</div>
+                                {% if lesson.quiz %}
+                                    <small class="text-secondary">
+                                        Quiz pass mark: {{ lesson.quiz.pass_percentage }}% |
+                                        {{ lesson.quiz.questions.count }} question{{ lesson.quiz.questions.count|pluralize }}
+                                    </small>
+                                {% else %}
+                                    <small class="text-danger">No quiz questions yet. Certificates require instructor-created questions.</small>
+                                {% endif %}
+                            </div>
+                            <div class="d-flex gap-2 flex-wrap justify-content-end">
+                                <a href="{% url 'quiz_manage' lesson.pk %}" class="btn btn-sm {% if lesson.quiz and lesson.quiz.questions.count %}btn-outline-primary{% else %}btn-primary{% endif %}">
+                                    <i class="bi bi-question-circle me-1"></i>
+                                    {% if lesson.quiz and lesson.quiz.questions.count %}Manage Quiz{% else %}Create Quiz{% endif %}
+                                </a>
+                                <a href="{% url 'lesson_update' lesson.pk %}" class="btn btn-sm btn-outline-secondary">
+                                    <i class="bi bi-pencil me-1"></i>Edit
+                                </a>
+                            </div>
+                        </div>
+                    </li>
+                {% empty %}
+                    <li class="list-group-item text-muted">No lessons yet.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% empty %}
+        <div class="empty-state">
+            <div class="empty-state-icon"><i class="bi bi-journal-plus"></i></div>
+            <h3>No sections yet</h3>
+            <p class="text-muted">Add a section to begin building your curriculum and quiz questions.</p>
+        </div>
+    {% endfor %}
+    <a href="{% url 'instructor_dashboard' %}" class="btn btn-link mt-3">&larr; Back to Dashboard</a>
+</div>
 {% endblock %}

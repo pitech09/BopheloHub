@@ -2,15 +2,16 @@ from django.views.generic import DetailView, CreateView, UpdateView, DeleteView,
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count, Q
 from django.shortcuts import redirect, get_object_or_404
+from django.contrib import messages
 from django.urls import reverse_lazy
 from django.http import JsonResponse
 from django.views import View
 from instructors.mixins import InstructorRequiredMixin
 from enrollments.models import Enrollment, LessonCompletion
 from courses.models import Course
-from quizzes.models import Quiz, UserQuizAttempt
+from quizzes.models import Quiz, UserQuizAttempt, Question, Choice
 from .models import Lesson, Section
-from .forms import LessonForm, SectionForm
+from .forms import LessonForm, SectionForm, QuizForm, QuestionForm, ChoiceFormSet
 
 
 class LessonPlayerView(LoginRequiredMixin, DetailView):
@@ -94,22 +95,12 @@ class CompleteLessonView(LoginRequiredMixin, View):
             lesson=lesson
         )
         
-        # Check if course is completed
-        total_lessons = sum(section.lessons.count() for section in course.sections.all())
-        completed_lessons = LessonCompletion.objects.filter(enrollment=enrollment).count()
-        
-        if completed_lessons >= total_lessons and total_lessons > 0:
-            enrollment.completed = True
-            enrollment.save()
-            
-            # Generate certificate
-            from certificates.models import Certificate
-            import uuid
-            if not hasattr(enrollment, 'certificate'):
-                Certificate.objects.create(
-                    enrollment=enrollment,
-                    certificate_code=str(uuid.uuid4()).replace('-', '').upper()[:16]
-                )
+        certificate = enrollment.complete_and_issue_certificate_if_eligible()
+        if certificate:
+            messages.success(
+                request,
+                'Congratulations! You passed the course requirements and your certificate is ready.'
+            )
         
         # Redirect to next lesson or course detail
         next_url = request.GET.get('next')
@@ -131,6 +122,21 @@ class QuizTakeView(LoginRequiredMixin, DetailView):
     model = Quiz
     template_name = 'quizzes/take.html'
     context_object_name = 'quiz'
+
+    def dispatch(self, request, *args, **kwargs):
+        quiz = self.get_object()
+        enrollment = Enrollment.objects.filter(
+            user=request.user,
+            course=quiz.lesson.section.course,
+            status='active',
+        ).first()
+        if not enrollment:
+            messages.warning(request, 'You need an active enrollment to take this quiz.')
+            return redirect('course_detail', slug=quiz.lesson.section.course.slug)
+        if not quiz.questions.exists():
+            messages.warning(request, 'This quiz is not ready yet. The instructor still needs to add questions.')
+            return redirect('lesson_play', pk=quiz.lesson.pk)
+        return super().dispatch(request, *args, **kwargs)
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -171,6 +177,10 @@ class QuizTakeView(LoginRequiredMixin, DetailView):
         
         # Calculate score
         total_questions = quiz.questions.count()
+        if total_questions == 0:
+            messages.warning(request, 'This quiz is not ready yet. The instructor still needs to add questions.')
+            return redirect('lesson_play', pk=quiz.lesson.pk)
+
         correct_answers = 0
         
         for question in quiz.questions.all():
@@ -190,6 +200,19 @@ class QuizTakeView(LoginRequiredMixin, DetailView):
             score=score,
             passed=passed
         )
+
+        if passed:
+            enrollment = Enrollment.objects.filter(
+                user=request.user,
+                course=quiz.lesson.section.course,
+            ).first()
+            if enrollment:
+                certificate = enrollment.complete_and_issue_certificate_if_eligible()
+                if certificate:
+                    messages.success(
+                        request,
+                        'Congratulations! You passed the course requirements and your certificate is ready.'
+                    )
         
         if passed:
             return redirect('quiz_result', pk=attempt.pk)
@@ -325,3 +348,89 @@ class ReorderSectionsView(InstructorRequiredMixin, View):
             Section.objects.filter(pk=section_id, course_id=course_id).update(order=index)
         
         return JsonResponse({'success': True})
+
+
+class QuizManageView(InstructorRequiredMixin, View):
+    template_name = 'lessons/quiz_manage.html'
+
+    def get_lesson(self):
+        return get_object_or_404(
+            Lesson,
+            pk=self.kwargs['lesson_pk'],
+            section__course__instructor=self.request.user,
+        )
+
+    def get_quiz(self, lesson):
+        quiz, _ = Quiz.objects.get_or_create(
+            lesson=lesson,
+            defaults={
+                'title': f'{lesson.title} Quiz',
+                'pass_percentage': 70,
+            },
+        )
+        return quiz
+
+    def get(self, request, *args, **kwargs):
+        lesson = self.get_lesson()
+        quiz = self.get_quiz(lesson)
+        return self.render_form(lesson, quiz)
+
+    def post(self, request, *args, **kwargs):
+        lesson = self.get_lesson()
+        quiz = self.get_quiz(lesson)
+        quiz_form = QuizForm(request.POST, instance=quiz)
+        question_form = QuestionForm(request.POST)
+        formset = ChoiceFormSet(request.POST)
+
+        if quiz_form.is_valid() and question_form.is_valid() and formset.is_valid():
+            quiz = quiz_form.save()
+            question = question_form.save(commit=False)
+            question.quiz = quiz
+            question.order = quiz.questions.count() + 1
+            question.save()
+
+            correct_count = 0
+            for form in formset:
+                if not form.cleaned_data:
+                    continue
+                choice = form.save(commit=False)
+                choice.question = question
+                choice.save()
+                if choice.is_correct:
+                    correct_count += 1
+
+            if correct_count != 1:
+                question.delete()
+                messages.error(request, 'Each question must have exactly one correct answer.')
+                return self.render_form(lesson, quiz, quiz_form, question_form, formset)
+
+            messages.success(request, 'Question added. Students must score at least 70% before a certificate can be issued.')
+            return redirect('quiz_manage', lesson_pk=lesson.pk)
+
+        return self.render_form(lesson, quiz, quiz_form, question_form, formset)
+
+    def render_form(self, lesson, quiz, quiz_form=None, question_form=None, formset=None):
+        from django.shortcuts import render
+        context = {
+            'course': lesson.section.course,
+            'section': lesson.section,
+            'lesson': lesson,
+            'quiz': quiz,
+            'quiz_form': quiz_form or QuizForm(instance=quiz),
+            'question_form': question_form or QuestionForm(),
+            'choice_formset': formset or ChoiceFormSet(queryset=Choice.objects.none()),
+        }
+        return render(self.request, self.template_name, context)
+
+
+class QuestionDeleteView(InstructorRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        question = get_object_or_404(
+            Question,
+            pk=self.kwargs['pk'],
+            quiz__lesson__section__course__instructor=request.user,
+        )
+        lesson_pk = question.quiz.lesson.pk
+        question.delete()
+        messages.success(request, 'Question removed.')
+        return redirect('quiz_manage', lesson_pk=lesson_pk)
