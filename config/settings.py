@@ -41,7 +41,7 @@ INSTALLED_APPS = [
     'django_ckeditor_5',  
     'crispy_forms',
     'crispy_bootstrap5',
-
+    "whitenoise.runserver_nostatic",
     # Local apps (order matters for some dependencies, but generally safe)
     'accounts',
     'instructors',
@@ -66,6 +66,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 ROOT_URLCONF = 'config.urls'
 
@@ -164,9 +165,13 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
-STATIC_URL = 'static/'
-STATICFILES_DIRS = [BASE_DIR / 'static']            # project-level static assets
-STATIC_ROOT = BASE_DIR / 'staticfiles'              # for collectstatic in production
+STATIC_URL = "/static/"
+
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
 
 # Media files (user uploads)
 MEDIA_URL = '/media/'
@@ -196,6 +201,12 @@ CKEDITOR_CONFIGS = {
         'toolbar': 'full',
         'height': 300,
         'width': '100%',
+    },
+}
+
+STORAGES = {
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },
 }
 
