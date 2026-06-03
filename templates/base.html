@@ -90,7 +90,7 @@
                                 {% if user.is_superuser %}
                                 <li><a class="dropdown-item" href="{% url 'owner_dashboard' %}"><i class="bi bi-speedometer2 me-2"></i>Platform Dashboard</a></li>
                                 {% endif %}
-                                {% if not user.is_instructor or user.instructor_profile.status != 'verified' %}
+                                {% if not user.is_superuser and (not user.is_instructor or user.instructor_profile.status != 'verified') %}
                                     <li><a class="dropdown-item" href="{% url 'student_dashboard' %}"><i class="bi bi-book me-2"></i>My Courses</a></li>
                                  {% endif %}
                                 {% comment %}

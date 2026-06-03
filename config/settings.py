@@ -222,5 +222,13 @@ STORAGES = {
     },
 }
 
+# ── Session Security ──────────────────────────────────────────────
+SESSION_COOKIE_AGE = 600              # 10 minutes (in seconds)
+SESSION_SAVE_EVERY_REQUEST = True     # refresh expiry on every request
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_COOKIE_HTTPONLY = True         # prevent JS access to session cookie
+SESSION_COOKIE_SECURE = False          # set True in production (HTTPS)
+CSRF_COOKIE_HTTPONLY = True            # prevent JS access to CSRF cookie
+
 CKEDITOR_5_FILE_UPLOAD_PERMISSION = "staff"  # or "authenticated"
 CKEDITOR_5_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
