@@ -128,6 +128,22 @@ class InstructorDashboardView(InstructorRequiredMixin, ListView):
         ).annotate(reply_count=Count('replies')).filter(reply_count=0).order_by('-created_at')
         context['unanswered_discussions'] = unanswered[:5]
 
+        # ── Recent Lesson Comments (from lesson player) ──
+        from lessons.models import LessonComment
+        recent_lesson_comments = LessonComment.objects.filter(
+            parent__isnull=True,  # Only top-level (not replies)
+            lesson__section__course__in=courses
+        ).select_related('user', 'lesson__section__course').order_by('-created_at')[:10]
+        context['recent_lesson_comments'] = recent_lesson_comments
+
+        # Unanswered lesson comments (no replies)
+        unanswered_lesson_comments = LessonComment.objects.filter(
+            parent__isnull=True,
+            replies__isnull=True,
+            lesson__section__course__in=courses
+        ).select_related('user', 'lesson__section__course').order_by('-created_at')[:5]
+        context['unanswered_lesson_comments'] = unanswered_lesson_comments
+
         # ── Reviews stats per course ──
         from reviews.models import Review
         recent_reviews = Review.objects.filter(

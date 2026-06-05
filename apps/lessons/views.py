@@ -1,5 +1,6 @@
 from django.views.generic import DetailView, CreateView, UpdateView, DeleteView, ListView, TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Q
 from django.shortcuts import redirect, get_object_or_404
 from django.contrib import messages
@@ -10,8 +11,136 @@ from instructors.mixins import InstructorRequiredMixin
 from enrollments.models import Enrollment, LessonCompletion
 from courses.models import Course
 from quizzes.models import Quiz, UserQuizAttempt, Question, Choice
-from .models import Lesson, Section
-from .forms import LessonForm, SectionForm, QuizForm, QuestionForm, ChoiceFormSet
+from .models import Lesson, Section, LessonNote, LessonComment, LessonResource
+from .forms import LessonForm, SectionForm, QuizForm, QuestionForm, ChoiceFormSet, LessonResourceForm
+from django.views.decorators.http import require_POST
+
+
+@require_POST
+@login_required
+def save_note(request, pk):
+    """Save or update a student's note for a lesson."""
+    lesson = get_object_or_404(Lesson, pk=pk)
+    content = request.POST.get('content', '').strip()
+    note, created = LessonNote.objects.update_or_create(
+        user=request.user,
+        lesson=lesson,
+        defaults={'content': content}
+    )
+    messages.success(request, 'Note saved successfully.')
+    return redirect('lesson_play', pk=lesson.pk)
+
+
+@require_POST
+@login_required
+def post_comment(request, pk):
+    """Post a comment on a lesson (or reply to a comment)."""
+    lesson = get_object_or_404(Lesson, pk=pk)
+    text = request.POST.get('text', '').strip()
+    parent_id = request.POST.get('parent_id')
+    next_url = request.POST.get('next') or request.META.get('HTTP_REFERER')
+
+    if text:
+        parent = None
+        if parent_id:
+            parent = get_object_or_404(LessonComment, pk=parent_id, lesson=lesson)
+
+        comment = LessonComment.objects.create(
+            user=request.user,
+            lesson=lesson,
+            parent=parent,
+            text=text
+        )
+
+        # Notify the instructor (if it's a top-level comment)
+        if not parent:
+            from notifications.models import Notification
+            name = request.user.get_full_name() or request.user.username
+            Notification.objects.create(
+                user=lesson.section.course.instructor,
+                message=f'New comment from {name} on lesson "{lesson.title}"'
+            )
+        # Notify the parent comment author (if it's a reply and not replying to self)
+        elif parent.user != request.user:
+            from notifications.models import Notification
+            name = request.user.get_full_name() or request.user.username
+            Notification.objects.create(
+                user=parent.user,
+                message=f'{name} replied to your comment on "{lesson.title}"'
+            )
+
+        messages.success(request, 'Comment posted successfully.')
+    else:
+        messages.error(request, 'Comment cannot be empty.')
+
+    # Redirect back to the page the user came from (engagement, dashboard, etc.)
+    if next_url and next_url != request.build_absolute_uri():
+        from django.utils.http import url_has_allowed_host_and_scheme
+        if url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}, require_https=request.is_secure()):
+            return redirect(next_url)
+    return redirect('lesson_play', pk=lesson.pk)
+
+
+# Lesson Resource Management Views (Instructor only)
+class LessonResourceCreateView(InstructorRequiredMixin, CreateView):
+    model = LessonResource
+    form_class = LessonResourceForm
+    template_name = 'lessons/resource_form.html'
+    
+    def get_success_url(self):
+        return reverse_lazy('lesson_play', kwargs={'pk': self.object.lesson.pk})
+    
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['initial'] = {'lesson': self.kwargs['lesson_pk']}
+        return kwargs
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['lesson'] = get_object_or_404(Lesson, pk=self.kwargs['lesson_pk'], section__course__instructor=self.request.user)
+        context['course'] = context['lesson'].section.course
+        return context
+    
+    def form_valid(self, form):
+        lesson = get_object_or_404(Lesson, pk=self.kwargs['lesson_pk'], section__course__instructor=self.request.user)
+        form.instance.lesson = lesson
+        form.instance.uploaded_by = self.request.user
+        return super().form_valid(form)
+
+
+class LessonResourceUpdateView(InstructorRequiredMixin, UpdateView):
+    model = LessonResource
+    form_class = LessonResourceForm
+    template_name = 'lessons/resource_form.html'
+    
+    def get_queryset(self):
+        return LessonResource.objects.filter(lesson__section__course__instructor=self.request.user)
+    
+    def get_success_url(self):
+        return reverse_lazy('lesson_play', kwargs={'pk': self.object.lesson.pk})
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['lesson'] = self.object.lesson
+        context['course'] = self.object.lesson.section.course
+        return context
+
+
+class LessonResourceDeleteView(InstructorRequiredMixin, DeleteView):
+    model = LessonResource
+    template_name = 'lessons/resource_confirm_delete.html'
+    
+    def get_queryset(self):
+        return LessonResource.objects.filter(lesson__section__course__instructor=self.request.user)
+    
+    def get_success_url(self):
+        return reverse_lazy('lesson_play', kwargs={'pk': self.object.lesson.pk})
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['lesson'] = self.object.lesson
+        context['course'] = self.object.lesson.section.course
+        return context
 
 
 class LessonPlayerView(LoginRequiredMixin, DetailView):
@@ -19,21 +148,32 @@ class LessonPlayerView(LoginRequiredMixin, DetailView):
     template_name = 'lessons/player.html'
     context_object_name = 'lesson'
     
+    def dispatch(self, request, *args, **kwargs):
+        lesson = self.get_object()
+        section = lesson.section
+        course = section.course
+        
+        # Check enrollment before proceeding
+        enrollment = Enrollment.objects.filter(
+            user=request.user,
+            course=course
+        ).first()
+        
+        if not enrollment:
+            return redirect('course_detail', slug=course.slug)
+        
+        return super().dispatch(request, *args, **kwargs)
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         lesson = self.object
         section = lesson.section
         course = section.course
         
-        # Check enrollment
         enrollment = Enrollment.objects.filter(
             user=self.request.user,
             course=course
         ).first()
-        
-        if not enrollment:
-            # Redirect to course detail if not enrolled
-            return redirect('course_detail', slug=course.slug)
         
         context['course'] = course
         context['section_title'] = section.title
@@ -70,12 +210,23 @@ class LessonPlayerView(LoginRequiredMixin, DetailView):
         completed_count = len(completed_lessons)
         context['course_progress'] = (completed_count / total_lessons * 100) if total_lessons > 0 else 0
         
-        # Get user's note for this lesson (if any)
-        # This would require a Note model - for now use a placeholder
-        context['user_note'] = ""
+        # Get user's note for this lesson
+        note = LessonNote.objects.filter(user=self.request.user, lesson=lesson).first()
+        context['user_note'] = note.content if note else ""
         
-        # Get lesson comments (if comment system exists)
-        context['lesson_comments'] = []  # Would need a Comment model
+        # Get lesson comments
+        context['lesson_comments'] = LessonComment.objects.filter(
+            lesson=lesson
+        ).select_related('user').order_by('created_at')
+        
+        # Get top-level comment count for the badge
+        context['comment_count'] = LessonComment.objects.filter(
+            lesson=lesson,
+            parent__isnull=True
+        ).count()
+        
+        # Check if user is instructor for this course
+        context['is_instructor'] = course.instructor == self.request.user
         
         return context
 

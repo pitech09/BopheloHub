@@ -114,8 +114,8 @@ a:active,
 
 .brand-logo {
     display: block;
-    width: 18px;
-    height: 16px;
+    width: 21.6px;
+    height: 19.2px;
     object-fit: cover;
     object-position: center;
     border-radius: 8px;
@@ -362,19 +362,21 @@ section .text-muted {
     margin-bottom: 2rem;
 }
 
+/* ============================================ */
 /* Cards */
+/* ============================================ */
 .card {
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-md);
     box-shadow: var(--shadow-sm);
-    transition: var(--transition);
+    transition: box-shadow 0.25s cubic-bezier(0.25, 0.1, 0.25, 1);
     overflow: hidden;
-    height: 100%;
     background: #fff;
     cursor: default;
 }
 
-.card:hover {
+/* Only move cards that are inside a hoverable container, not generic cards */
+.card:not(.stat-card):not(.course-card):not(.category-card):hover {
     transform: translateY(-3px);
     box-shadow: var(--shadow-lift);
     border-color: transparent;
@@ -794,12 +796,20 @@ a.card:hover .category-icon i {
     font-size: 0;
 }
 
-/* Course Detail Page */
+/* ============================================ */
+/* Course Detail Page - Clean Spacing */
+/* ============================================ */
+
+/* Remove main padding-top since course detail has its own hero spacing */
+body.has-course-detail main.py-4 {
+    padding-top: 0;
+}
+
 .course-detail-hero {
     background: linear-gradient(180deg, #fbfbfd 0%, #f5f5f7 100%);
     padding: 2rem;
     border-radius: var(--radius-md);
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
     border: 1px solid var(--border-subtle);
     box-shadow: var(--shadow-sm);
 }
@@ -1070,7 +1080,9 @@ a.card:hover .category-icon i {
     text-decoration: none;
 }
 
-/* Dashboard Stats */
+/* ============================================ */
+/* Dashboard Stats - No overlap on hover */
+/* ============================================ */
 .stat-card {
     background: white;
     border-radius: var(--radius-md);
@@ -1079,7 +1091,15 @@ a.card:hover .category-icon i {
     border-left: none;
     border: 1px solid var(--border-subtle);
     text-align: center;
-    min-height: 120px;
+    transition: box-shadow 0.25s cubic-bezier(0.25, 0.1, 0.25, 1);
+    /* Override global card hover */
+    transform: none !important;
+}
+
+.stat-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: none !important;
+    border-color: var(--border-subtle);
 }
 
 .stat-card .stat-label {
@@ -1253,6 +1273,14 @@ a.card:hover .category-icon i {
     border-top: 1px solid var(--border-subtle);
     padding: 1.25rem 1.5rem;
 }
+.profile-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    background:
+        radial-gradient(circle at 50% 50%, rgba(0, 113, 227, 0.12), rgba(255, 255, 255, 0) 70%);
+}
 
 /* Avatar */
 .avatar {
@@ -1338,27 +1366,28 @@ a.card:hover .category-icon i {
 
 /* --- Reviews Container --- */
 .reviews-section {
-    padding: 3rem 0;
+    padding: 2.5rem 0 1rem;
+    margin-top: 0.5rem;
 }
 
 .reviews-section-header {
     text-align: center;
-    margin-bottom: 2.5rem;
+    margin-bottom: 2rem;
 }
 
 .reviews-section-title {
-    font-size: 2rem;
+    font-size: 1.85rem;
     font-weight: 700;
     letter-spacing: -0.025em;
     color: var(--text-primary);
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.35rem;
 }
 
 .reviews-section-subtitle {
     color: var(--text-secondary);
-    font-size: 1.0625rem;
+    font-size: 1rem;
     font-weight: 400;
-    max-width: 520px;
+    max-width: 480px;
     margin: 0 auto;
 }
 
@@ -1366,9 +1395,9 @@ a.card:hover .category-icon i {
 .review-stats-bar {
     display: flex;
     flex-wrap: wrap;
-    gap: 2.5rem;
-    padding: 1.75rem 0;
-    margin-bottom: 2rem;
+    gap: 2rem;
+    padding: 1.5rem 0;
+    margin-bottom: 1.5rem;
     border-bottom: 1px solid var(--border-subtle);
     justify-content: center;
 }
@@ -1381,7 +1410,7 @@ a.card:hover .category-icon i {
 }
 
 .review-stat-value {
-    font-size: 1.75rem;
+    font-size: 1.5rem;
     font-weight: 700;
     letter-spacing: -0.02em;
     color: var(--text-primary);
@@ -1405,20 +1434,20 @@ a.card:hover .category-icon i {
 .reviews-overview-card {
     background: #fff;
     border: 1px solid var(--border-subtle);
-    border-radius: 20px;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
-    padding: 2.25rem;
-    margin-bottom: 2.5rem;
+    border-radius: 18px;
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.04);
+    padding: 1.75rem;
+    margin-bottom: 2rem;
     transition: box-shadow 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 
 .reviews-overview-card:hover {
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.06);
 }
 
 .reviews-overview-inner {
     display: flex;
-    gap: 3rem;
+    gap: 2.5rem;
     align-items: center;
 }
 
@@ -1426,27 +1455,27 @@ a.card:hover .category-icon i {
 .rating-summary-main {
     flex-shrink: 0;
     text-align: center;
-    min-width: 180px;
+    min-width: 160px;
 }
 
 .rating-summary-large {
-    font-size: 4.5rem;
+    font-size: 3.75rem;
     font-weight: 700;
     letter-spacing: -0.035em;
     color: var(--text-primary);
     line-height: 1;
-    margin-bottom: 0.35rem;
+    margin-bottom: 0.25rem;
 }
 
 .rating-summary-stars {
     display: flex;
     justify-content: center;
-    gap: 4px;
-    margin-bottom: 0.5rem;
+    gap: 3px;
+    margin-bottom: 0.4rem;
 }
 
 .rating-summary-stars i {
-    font-size: 1.65rem;
+    font-size: 1.4rem;
     color: #ff9f0a;
 }
 
@@ -1459,41 +1488,41 @@ a.card:hover .category-icon i {
 }
 
 .rating-summary-total {
-    font-size: 0.9375rem;
+    font-size: 0.875rem;
     color: var(--text-secondary);
     font-weight: 400;
 }
 
 .rating-summary-recommend {
-    margin-top: 0.75rem;
-    padding-top: 0.75rem;
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
     border-top: 1px solid var(--border-subtle);
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
     color: #34c759;
     font-weight: 500;
 }
 
 .rating-summary-recommend i {
-    margin-right: 4px;
+    margin-right: 3px;
 }
 
 .rating-summary-recent {
-    font-size: 0.8125rem;
+    font-size: 0.75rem;
     color: var(--text-tertiary);
-    margin-top: 0.35rem;
+    margin-top: 0.25rem;
 }
 
 /* Right: Distribution Bars */
 .rating-distribution {
     flex: 1;
-    min-width: 220px;
+    min-width: 200px;
 }
 
 .rating-dist-row {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 7px;
+    gap: 8px;
+    margin-bottom: 5px;
     transition: var(--transition);
 }
 
@@ -1502,25 +1531,25 @@ a.card:hover .category-icon i {
 }
 
 .rating-dist-label {
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
     font-weight: 500;
     color: var(--text-primary);
-    min-width: 32px;
+    min-width: 30px;
     text-align: right;
     display: flex;
     align-items: center;
-    gap: 3px;
+    gap: 2px;
     justify-content: flex-end;
 }
 
 .rating-dist-label i {
     color: #ff9f0a;
-    font-size: 0.7rem;
+    font-size: 0.65rem;
 }
 
 .rating-dist-bar-track {
     flex: 1;
-    height: 8px;
+    height: 7px;
     background: var(--bg-section);
     border-radius: 6px;
     overflow: hidden;
@@ -1537,9 +1566,9 @@ a.card:hover .category-icon i {
 }
 
 .rating-dist-count {
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
     color: var(--text-secondary);
-    min-width: 28px;
+    min-width: 24px;
     text-align: left;
     font-weight: 500;
 }
@@ -1548,43 +1577,29 @@ a.card:hover .category-icon i {
 .review-card-modern {
     background: #fff;
     border: 1px solid var(--border-subtle);
-    border-radius: 18px;
-    padding: 1.75rem;
-    margin-bottom: 1rem;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
-    transition: all 0.35s cubic-bezier(0.25, 0.1, 0.25, 1);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 0.875rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+    transition: box-shadow 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
     animation: appleReviewFadeIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
-    position: relative;
-}
-
-.review-card-modern::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: 18px;
-    opacity: 0;
-    transition: opacity 0.35s ease;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
-    pointer-events: none;
-}
-
-.review-card-modern:hover::before {
-    opacity: 1;
+    /* No translateY to prevent overlap */
 }
 
 .review-card-modern:hover {
-    border-color: transparent;
-    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+    border-color: var(--border-light);
+    /* No transform to prevent overlap */
 }
 
 @keyframes appleReviewFadeIn {
     from {
         opacity: 0;
-        transform: translateY(20px) scale(0.98);
+        transform: translateY(16px);
     }
     to {
         opacity: 1;
-        transform: translateY(0) scale(1);
+        transform: translateY(0);
     }
 }
 
@@ -1602,13 +1617,13 @@ a.card:hover .category-icon i {
 .review-card-header {
     display: flex;
     align-items: center;
-    gap: 0.85rem;
-    margin-bottom: 0.85rem;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
 }
 
 .review-card-avatar {
-    width: 46px;
-    height: 46px;
+    width: 42px;
+    height: 42px;
     border-radius: 50%;
     object-fit: cover;
     flex-shrink: 0;
@@ -1616,8 +1631,8 @@ a.card:hover .category-icon i {
 }
 
 .review-card-avatar-placeholder {
-    width: 46px;
-    height: 46px;
+    width: 42px;
+    height: 42px;
     border-radius: 50%;
     background: linear-gradient(135deg, var(--primary), #47a9ff);
     color: #fff;
@@ -1625,7 +1640,7 @@ a.card:hover .category-icon i {
     align-items: center;
     justify-content: center;
     font-weight: 600;
-    font-size: 1.15rem;
+    font-size: 1.05rem;
     flex-shrink: 0;
     letter-spacing: 0.02em;
 }
@@ -1654,7 +1669,7 @@ a.card:hover .category-icon i {
 .review-card-stars {
     display: flex;
     gap: 2px;
-    margin-bottom: 0.65rem;
+    margin-bottom: 0.5rem;
 }
 
 .review-card-stars i {
@@ -1670,15 +1685,15 @@ a.card:hover .category-icon i {
     color: var(--text-primary);
     font-size: 0.9375rem;
     line-height: 1.65;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0;
     white-space: pre-wrap;
 }
 
 .review-card-actions {
     display: flex;
     gap: 0.75rem;
-    margin-top: 0.85rem;
-    padding-top: 0.85rem;
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
     border-top: 1px solid var(--border-subtle);
 }
 
@@ -1693,19 +1708,19 @@ a.card:hover .category-icon i {
 .verified-badge {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: 3px;
     background: rgba(52, 199, 89, 0.1);
     color: #34c759;
     font-size: 0.675rem;
     font-weight: 600;
-    padding: 2px 9px;
+    padding: 2px 8px;
     border-radius: 20px;
     letter-spacing: 0;
     white-space: nowrap;
 }
 
 .verified-badge i {
-    font-size: 0.625rem;
+    font-size: 0.6rem;
 }
 
 /* ============================================ */
@@ -1714,36 +1729,36 @@ a.card:hover .category-icon i {
 .review-form-card {
     background: #fff;
     border: 1px solid var(--border-subtle);
-    border-radius: 20px;
-    padding: 2.25rem;
-    margin-bottom: 2.5rem;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+    border-radius: 18px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.04);
 }
 
 .review-form-title {
-    font-size: 1.35rem;
+    font-size: 1.25rem;
     font-weight: 700;
     letter-spacing: -0.015em;
     color: var(--text-primary);
-    margin-bottom: 0.25rem;
+    margin-bottom: 0.2rem;
     display: flex;
     align-items: center;
     gap: 0.5rem;
 }
 
 .review-form-subtitle {
-    font-size: 0.9375rem;
+    font-size: 0.875rem;
     color: var(--text-secondary);
-    margin-bottom: 1.75rem;
+    margin-bottom: 1.5rem;
     font-weight: 400;
 }
 
 /* --- Interactive Star Rating (Apple Style) --- */
 .rating-label-text {
-    font-size: 0.9375rem;
+    font-size: 0.875rem;
     color: var(--text-secondary);
-    margin-bottom: 0.75rem;
-    min-height: 1.35rem;
+    margin-bottom: 0.65rem;
+    min-height: 1.25rem;
     transition: var(--transition);
     font-weight: 500;
 }
@@ -1752,8 +1767,8 @@ a.card:hover .category-icon i {
     display: flex;
     flex-direction: row-reverse;
     justify-content: flex-start;
-    gap: 6px;
-    margin-bottom: 1.5rem;
+    gap: 5px;
+    margin-bottom: 1.25rem;
 }
 
 .star-rating-input input {
@@ -1762,34 +1777,25 @@ a.card:hover .category-icon i {
 
 .star-rating-input label {
     cursor: pointer;
-    font-size: 2.25rem;
+    font-size: 2rem;
     color: var(--border-light);
     transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
     line-height: 1;
 }
 
 .star-rating-input label i {
-    font-size: 2.25rem;
+    font-size: 2rem;
     transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .star-rating-input label:hover,
 .star-rating-input label:hover ~ label {
     color: #ff9f0a;
-    transform: scale(1.18) rotate(-4deg);
+    transform: scale(1.15) rotate(-3deg);
 }
 
 .star-rating-input input:checked ~ label {
     color: #ff9f0a;
-    transform: scale(1.05);
-}
-
-.star-rating-input input:checked + label {
-    transform: scale(1.12);
-}
-
-.star-rating-input input:checked ~ label i::before {
-    content: "\f588"; /* bi-star-fill */
 }
 
 .star-rating-input label:active {
@@ -1808,10 +1814,10 @@ a.card:hover .category-icon i {
 /* --- Review Textarea --- */
 .review-textarea {
     width: 100%;
-    min-height: 130px;
+    min-height: 120px;
     border: 1px solid var(--border-light);
-    border-radius: 14px;
-    padding: 16px;
+    border-radius: 12px;
+    padding: 14px;
     font-size: 0.9375rem;
     font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
     background: var(--bg-section);
@@ -1837,7 +1843,7 @@ a.card:hover .category-icon i {
 .char-counter-wrap {
     display: flex;
     justify-content: flex-end;
-    margin-top: 8px;
+    margin-top: 6px;
 }
 
 .char-counter {
@@ -1847,12 +1853,12 @@ a.card:hover .category-icon i {
     font-weight: 400;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
 }
 
 .char-counter .char-progress-ring {
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
     border-radius: 50%;
     border: 2px solid var(--border-light);
     position: relative;
@@ -1881,28 +1887,28 @@ a.card:hover .category-icon i {
 
 /* --- Submit Button (Apple Primary) --- */
 .review-submit-btn {
-    min-height: 50px;
-    padding: 14px 36px;
+    min-height: 48px;
+    padding: 12px 32px;
     font-size: 1rem;
     font-weight: 600;
     border-radius: 26px;
     background: var(--primary);
     color: #fff;
     border: none;
-    box-shadow: 0 8px 20px rgba(0, 113, 227, 0.2);
+    box-shadow: 0 6px 18px rgba(0, 113, 227, 0.18);
     transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
     width: 100%;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
+    gap: 8px;
     letter-spacing: -0.01em;
 }
 
 .review-submit-btn:hover {
     background: var(--primary-hover);
-    box-shadow: 0 10px 28px rgba(0, 113, 227, 0.28);
+    box-shadow: 0 8px 24px rgba(0, 113, 227, 0.24);
     color: #fff;
     text-decoration: none;
     transform: translateY(-1px);
@@ -1921,9 +1927,9 @@ a.card:hover .category-icon i {
 }
 
 .review-submit-btn .spinner-border-sm {
-    width: 1.1rem;
-    height: 1.1rem;
-    border-width: 2.5px;
+    width: 1rem;
+    height: 1rem;
+    border-width: 2px;
 }
 
 /* Delete link */
@@ -1951,30 +1957,30 @@ a.card:hover .category-icon i {
 /* Delete Confirmation Modal (Apple Style) */
 /* ============================================ */
 .delete-modal-icon {
-    width: 60px;
-    height: 60px;
+    width: 56px;
+    height: 56px;
     border-radius: 50%;
     background: rgba(255, 59, 48, 0.1);
     color: #ff3b30;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.65rem;
-    margin: 0 auto 1.25rem;
+    font-size: 1.5rem;
+    margin: 0 auto 1rem;
 }
 
 .delete-modal-title {
-    font-size: 1.25rem;
+    font-size: 1.2rem;
     font-weight: 700;
     color: var(--text-primary);
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.4rem;
     letter-spacing: -0.01em;
 }
 
 .delete-modal-text {
     font-size: 0.9375rem;
     color: var(--text-secondary);
-    margin-bottom: 1.75rem;
+    margin-bottom: 1.5rem;
     line-height: 1.5;
 }
 
@@ -1982,8 +1988,8 @@ a.card:hover .category-icon i {
     background: #ff3b30;
     color: #fff;
     border: none;
-    min-height: 44px;
-    padding: 10px 28px;
+    min-height: 42px;
+    padding: 10px 24px;
     border-radius: 24px;
     font-weight: 600;
     font-size: 0.9375rem;
@@ -2003,59 +2009,54 @@ a.card:hover .category-icon i {
     transform: none;
 }
 
-/* Apple-style modal responsive */
-.modal-dialog.modal-apple .modal-content {
-    border-radius: 20px;
-}
-
 /* ============================================ */
 /* Empty State for Reviews */
 /* ============================================ */
 .review-empty-state {
     text-align: center;
-    padding: 4rem 2rem 3rem;
+    padding: 3.5rem 2rem 2.5rem;
 }
 
 .review-empty-icon {
-    width: 80px;
-    height: 80px;
+    width: 72px;
+    height: 72px;
     border-radius: 50%;
     background: linear-gradient(135deg, var(--primary-subtle), rgba(0, 113, 227, 0.05));
     color: var(--primary);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 2.25rem;
-    margin: 0 auto 1.5rem;
+    font-size: 2rem;
+    margin: 0 auto 1.25rem;
     transition: var(--transition);
 }
 
 .review-empty-state:hover .review-empty-icon {
-    transform: scale(1.05);
-    box-shadow: 0 8px 24px rgba(0, 113, 227, 0.12);
+    transform: scale(1.03);
+    box-shadow: 0 6px 20px rgba(0, 113, 227, 0.1);
 }
 
 .review-empty-title {
-    font-size: 1.35rem;
+    font-size: 1.25rem;
     font-weight: 700;
     color: var(--text-primary);
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.4rem;
     letter-spacing: -0.01em;
 }
 
 .review-empty-text {
     font-size: 0.9375rem;
     color: var(--text-secondary);
-    margin-bottom: 1.75rem;
-    max-width: 400px;
+    margin-bottom: 1.5rem;
+    max-width: 380px;
     margin-left: auto;
     margin-right: auto;
     line-height: 1.55;
 }
 
 .review-empty-btn {
-    min-height: 48px;
-    padding: 12px 32px;
+    min-height: 46px;
+    padding: 10px 28px;
     border-radius: 26px;
     font-weight: 600;
     font-size: 0.9375rem;
@@ -2067,21 +2068,21 @@ a.card:hover .category-icon i {
 /* ============================================ */
 .review-toast {
     position: fixed;
-    bottom: 32px;
+    bottom: 28px;
     left: 50%;
-    transform: translateX(-50%) translateY(100px);
+    transform: translateX(-50%) translateY(80px);
     background: #1d1d1f;
     color: #fff;
-    padding: 14px 28px;
-    border-radius: 14px;
+    padding: 12px 24px;
+    border-radius: 12px;
     font-size: 0.9375rem;
     font-weight: 500;
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+    box-shadow: 0 10px 36px rgba(0, 0, 0, 0.16);
     z-index: 1060;
     opacity: 0;
-    transition: all 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+    transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
     pointer-events: none;
-    max-width: 90vw;
+    max-width: 88vw;
     text-align: center;
 }
 
@@ -2105,11 +2106,11 @@ a.card:hover .category-icon i {
 /* ============================================ */
 @media (max-width: 768px) {
     .reviews-section {
-        padding: 2rem 0;
+        padding: 2rem 0 0.5rem;
     }
 
     .reviews-section-title {
-        font-size: 1.6rem;
+        font-size: 1.5rem;
     }
 
     .reviews-section-subtitle {
@@ -2117,12 +2118,12 @@ a.card:hover .category-icon i {
     }
 
     .review-stats-bar {
-        gap: 1.5rem;
-        padding: 1.25rem 0;
+        gap: 1.25rem;
+        padding: 1rem 0;
     }
 
     .review-stat-value {
-        font-size: 1.35rem;
+        font-size: 1.25rem;
     }
 
     .review-stat-divider {
@@ -2131,7 +2132,7 @@ a.card:hover .category-icon i {
 
     .reviews-overview-inner {
         flex-direction: column;
-        gap: 1.75rem;
+        gap: 1.5rem;
     }
 
     .rating-summary-main {
@@ -2140,11 +2141,11 @@ a.card:hover .category-icon i {
     }
 
     .rating-summary-large {
-        font-size: 3.5rem;
+        font-size: 3rem;
     }
 
     .rating-summary-stars i {
-        font-size: 1.35rem;
+        font-size: 1.25rem;
     }
 
     .rating-distribution {
@@ -2152,83 +2153,83 @@ a.card:hover .category-icon i {
     }
 
     .review-form-card {
-        padding: 1.5rem;
-    }
-
-    .review-form-title {
-        font-size: 1.15rem;
-    }
-
-    .reviews-overview-card {
-        padding: 1.5rem;
-    }
-
-    .review-card-modern {
         padding: 1.25rem;
     }
 
+    .review-form-title {
+        font-size: 1.1rem;
+    }
+
+    .reviews-overview-card {
+        padding: 1.25rem;
+    }
+
+    .review-card-modern {
+        padding: 1.125rem;
+    }
+
     .star-rating-input label {
-        font-size: 1.85rem;
+        font-size: 1.75rem;
     }
 
     .star-rating-input label i {
-        font-size: 1.85rem;
+        font-size: 1.75rem;
     }
 
     .review-empty-state {
-        padding: 2.5rem 1.5rem;
+        padding: 2.5rem 1.5rem 2rem;
     }
 
     .review-empty-icon {
-        width: 64px;
-        height: 64px;
-        font-size: 1.75rem;
+        width: 60px;
+        height: 60px;
+        font-size: 1.6rem;
     }
 }
 
 @media (max-width: 480px) {
     .review-stats-bar {
-        gap: 1rem;
+        gap: 0.875rem;
     }
 
     .review-stat-value {
-        font-size: 1.15rem;
+        font-size: 1.1rem;
     }
 
     .review-stat-label {
-        font-size: 0.75rem;
+        font-size: 0.7rem;
     }
 
     .reviews-overview-card {
-        padding: 1.25rem;
-        border-radius: 16px;
-    }
-
-    .review-card-modern {
         padding: 1rem;
         border-radius: 14px;
     }
 
+    .review-card-modern {
+        padding: 0.875rem;
+        border-radius: 14px;
+    }
+
     .review-form-card {
-        padding: 1.25rem;
-        border-radius: 16px;
+        padding: 1rem;
+        border-radius: 14px;
     }
 
     .star-rating-input {
-        gap: 4px;
+        gap: 3px;
     }
 
     .star-rating-input label {
-        font-size: 1.6rem;
+        font-size: 1.5rem;
     }
 
     .star-rating-input label i {
-        font-size: 1.6rem;
+        font-size: 1.5rem;
     }
 
     .review-submit-btn {
-        min-height: 46px;
-        padding: 12px 24px;
+        min-height: 44px;
+        padding: 10px 20px;
         font-size: 0.9375rem;
     }
 }
@@ -2425,8 +2426,8 @@ a.card:hover .category-icon i {
     }
 
     .brand-logo {
-        width: 18px;
-        height: 16px;
+        width: 21.6px;
+        height: 19.2px;
         border-radius: 8px;
     }
 
@@ -2476,7 +2477,7 @@ a.card:hover .category-icon i {
     }
 
     .stat-card {
-        margin-bottom: 1rem;
+        margin-bottom: 0.5rem;
     }
 
     .container h2:not(.card-title) {
@@ -2733,4 +2734,428 @@ a.card:hover .category-icon i {
 .auth-error-banner i {
     font-size: 1rem;
     flex-shrink: 0;
+}
+
+/* ============================================ */
+/* Lesson Resources & Comments - Facebook-style */
+/* ============================================ */
+
+/* Resources Tab */
+.resource-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    background: #fff;
+    transition: var(--transition);
+}
+
+.resource-item:hover {
+    border-color: var(--primary);
+    box-shadow: var(--shadow-sm);
+    background: var(--bg-section);
+}
+
+.resource-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.resource-icon.pdf { background: rgba(255, 59, 48, 0.1); color: #ff3b30; }
+.resource-icon.doc { background: rgba(0, 113, 227, 0.1); color: var(--primary); }
+.resource-icon.xls { background: rgba(52, 199, 89, 0.1); color: #34c759; }
+.resource-icon.ppt { background: rgba(255, 204, 0, 0.2); color: #c89600; }
+.resource-icon.zip { background: rgba(100, 210, 255, 0.2); color: #64d2ff; }
+.resource-icon.default { background: var(--bg-section); color: var(--text-tertiary); }
+
+.resource-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.resource-title {
+    font-weight: 600;
+    font-size: 0.9375rem;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.resource-description {
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.25rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.resource-meta {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+}
+
+.resource-meta i {
+    margin-right: 0.25rem;
+}
+
+.resource-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+/* Comment Threading - Facebook Style */
+.comment-thread {
+    animation: commentFadeIn 0.3s ease-out;
+}
+
+@keyframes commentFadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.comment {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.comment-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.comment-avatar-placeholder {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 1rem;
+    color: #fff;
+    flex-shrink: 0;
+    background: linear-gradient(135deg, var(--primary), #47a9ff);
+}
+
+.comment-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.comment-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.35rem;
+    flex-wrap: wrap;
+}
+
+.comment-author {
+    font-weight: 600;
+    font-size: 0.9375rem;
+    color: var(--text-primary);
+}
+
+.comment-badge {
+    font-size: 0.625rem;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.comment-badge.instructor {
+    background: rgba(255, 204, 0, 0.2);
+    color: #c89600;
+}
+
+.comment-time {
+    font-size: 0.8125rem;
+    color: var(--text-tertiary);
+    margin-left: auto;
+}
+
+.comment-text {
+    font-size: 0.9375rem;
+    color: var(--text-primary);
+    line-height: 1.6;
+    margin-bottom: 0.5rem;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.comment-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.comment-action-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    padding: 4px 8px;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.comment-action-btn:hover {
+    color: var(--primary);
+    background: var(--primary-subtle);
+    text-decoration: none;
+}
+
+.comment-action-btn i {
+    font-size: 0.875rem;
+}
+
+.comment-reply-count {
+    font-size: 0.8125rem;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.comment-reply-count:hover {
+    color: var(--primary);
+}
+
+/* Reply Form */
+.reply-form {
+    margin-top: 0.75rem;
+    padding-left: 1.5rem;
+    border-left: 2px solid var(--primary-subtle);
+    animation: replyFormSlideIn 0.25s ease-out;
+}
+
+@keyframes replyFormSlideIn {
+    from { opacity: 0; max-height: 0; }
+    to { opacity: 1; max-height: 500px; }
+}
+
+.reply-form .comment-avatar-placeholder {
+    width: 32px;
+    height: 32px;
+    font-size: 0.875rem;
+}
+
+.reply-form .reply-textarea {
+    width: 100%;
+    min-height: 60px;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-sm);
+    padding: 8px 12px;
+    font-size: 0.875rem;
+    font-family: inherit;
+    background: var(--bg-section);
+    color: var(--text-primary);
+    transition: var(--transition);
+    resize: vertical;
+    line-height: 1.5;
+}
+
+.reply-form .reply-textarea:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-subtle);
+    outline: none;
+    background: #fff;
+}
+
+.reply-form .reply-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.reply-form .btn {
+    min-height: 32px;
+    padding: 6px 16px;
+    font-size: 0.8125rem;
+}
+
+/* Reply Indicator */
+#replyIndicator {
+    animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Nested replies indentation */
+.comment-thread {
+    border-left: 2px solid var(--border-subtle);
+    margin-left: 1rem;
+    padding-left: 1rem;
+}
+
+.comment-thread .comment-thread {
+    border-left-color: var(--primary-subtle);
+}
+
+/* Depth-based styling */
+.comment-thread[data-depth="1"] {
+    border-left-color: var(--primary-subtle);
+}
+
+.comment-thread[data-depth="2"] {
+    border-left-color: rgba(52, 199, 89, 0.2);
+}
+
+.comment-thread[data-depth="3"],
+.comment-thread[data-depth="4"],
+.comment-thread[data-depth="5"] {
+    border-left-color: rgba(100, 210, 255, 0.2);
+}
+
+.comment-thread[data-depth="1"] > .comment > .comment-body > .comment-header .comment-author::before {
+    content: "↳ ";
+    color: var(--primary);
+    font-size: 0.875rem;
+}
+
+/* Dropdown styling for comment actions */
+.comment-dropdown .dropdown-menu {
+    min-width: 160px;
+}
+
+.comment-dropdown .dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.comment-dropdown .dropdown-item i {
+    font-size: 0.875rem;
+    width: 16px;
+    text-align: center;
+}
+
+/* Resources empty state */
+.resources-empty {
+    text-align: center;
+    padding: 3rem 1.5rem;
+    color: var(--text-secondary);
+}
+
+.resources-empty i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+    color: var(--primary);
+}
+
+.resources-empty h6 {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.resources-empty p {
+    font-size: 0.875rem;
+    margin-bottom: 1.5rem;
+}
+
+/* Discussion empty state */
+.discussion-empty {
+    text-align: center;
+    padding: 3rem 1.5rem;
+    color: var(--text-secondary);
+}
+
+.discussion-empty i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+    color: var(--primary);
+}
+
+.discussion-empty h6 {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.discussion-empty p {
+    font-size: 0.875rem;
+    margin-bottom: 1.5rem;
+}
+
+/* Tab badges */
+.nav-tabs .nav-link .badge {
+    margin-left: 0.35rem;
+    font-size: 0.6875rem;
+    padding: 2px 6px;
+    vertical-align: middle;
+}
+
+/* File type icons for resources */
+.resource-file-type {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    font-size: 0.875rem;
+}
+
+/* Inline comment form styles */
+#commentForm .form-control {
+    background: #fff;
+    border: 1px solid var(--border-light);
+}
+
+#commentForm .form-control:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-subtle);
+    background: #fff;
+}
+
+/* Smooth scroll for jumping to comments */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Tooltip for reply buttons */
+.reply-btn:hover {
+    text-decoration: underline;
+}
+
+/* Focus visible for accessibility */
+.reply-btn:focus-visible,
+.comment-action-btn:focus-visible,
+.resource-item a:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--primary-subtle);
+    border-radius: 4px;
 }

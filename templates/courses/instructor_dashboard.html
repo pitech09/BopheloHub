@@ -16,7 +16,10 @@
             </h2>
             <p class="text-muted mb-0">Here's what's happening with your courses today.</p>
         </div>
-        <div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'instructor_engagement' %}" class="btn btn-outline-primary">
+                <i class="bi bi-chat-square-dots me-1"></i> Student Engagement
+            </a>
             <a href="{% url 'course_create' %}" class="btn btn-primary">
                 <i class="bi bi-plus-lg me-1"></i> Create New Course
             </a>
@@ -196,9 +199,11 @@
                                         {% endif %}
                                     </td>
                                     <td class="text-center">
-                                        <span class="badge bg-info bg-opacity-10 text-info">
-                                            {{ course.discussion_count }}
-                                        </span>
+                                        <a href="{% url 'discussions:course_discussions' course.slug %}" class="text-decoration-none">
+                                            <span class="badge bg-info bg-opacity-10 text-info">
+                                                {{ course.discussion_count }}
+                                            </span>
+                                        </a>
                                     </td>
                                     <td class="text-center">
                                         {% if course.is_published %}
@@ -378,7 +383,7 @@
                             <div class="d-flex justify-content-between align-items-start">
                                 <div class="w-100">
                                     <div class="d-flex justify-content-between">
-                                        <a href="#" class="text-decoration-none fw-semibold text-dark">
+                                        <a href="{% url 'discussions:discussion_detail' discussion.pk %}" class="text-decoration-none fw-semibold text-dark">
                                             {{ discussion.title|truncatechars:40 }}
                                         </a>
                                         {% if discussion.is_pinned %}
@@ -439,6 +444,70 @@
                 </div>
             </div>
             {% endif %}
+
+            <!-- Lesson Comments -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="bi bi-chat-square-text me-2"></i>Lesson Comments
+                        {% if unanswered_lesson_comments %}
+                        <span class="badge bg-danger ms-2">{{ unanswered_lesson_comments|length }}</span>
+                        {% endif %}
+                    </h5>
+                    <small class="text-muted">Recent 10</small>
+                </div>
+                <div class="card-body p-0">
+                    {% if recent_lesson_comments %}
+                    <div class="list-group list-group-flush">
+                        {% for comment in recent_lesson_comments %}
+                        <div class="list-group-item py-3">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="w-100">
+                                    <div class="d-flex justify-content-between">
+                                        <a href="{% url 'lesson_play' comment.lesson.pk %}" class="text-decoration-none fw-semibold text-dark">
+                                            {{ comment.text|truncatechars:40 }}
+                                        </a>
+                                    </div>
+                                    <small class="text-muted d-block">
+                                        <i class="bi bi-person me-1"></i>{{ comment.user.get_full_name|default:comment.user.username }}
+                                        in <strong>{{ comment.lesson.section.course.title|truncatechars:25 }}</strong>
+                                        <span class="ms-2">{{ comment.created_at|timesince }} ago</span>
+                                    </small>
+                                    <div class="mt-1">
+                                        <span class="badge bg-success bg-opacity-10 text-success">
+                                            <i class="bi bi-chat me-1"></i>{{ comment.replies.count }} replies
+                                        </span>
+                                        {% if comment.replies.count == 0 %}
+                                        <span class="badge bg-danger bg-opacity-10 text-danger ms-1">
+                                            <i class="bi bi-exclamation-circle me-1"></i>Needs response
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                    <!-- Quick reply form -->
+                                    <form method="post" action="{% url 'lesson_post_comment' comment.lesson.pk %}" class="mt-2">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="parent_id" value="{{ comment.pk }}">
+                                        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                        <div class="input-group input-group-sm">
+                                            <input type="text" name="text" class="form-control" placeholder="Quick reply..." required>
+                                            <button type="submit" class="btn btn-primary">
+                                                <i class="bi bi-send"></i>
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4 text-muted">
+                        <i class="bi bi-chat-square-text" style="font-size: 2rem;"></i>
+                        <p class="mt-2">No lesson comments yet.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
 
             <!-- Recent Reviews -->
             <div class="card border-0 shadow-sm">

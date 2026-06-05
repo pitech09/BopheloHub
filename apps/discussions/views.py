@@ -99,7 +99,7 @@ def create_discussion(request, slug):
             )
 
             messages.success(request, 'Your discussion has been posted!')
-            return redirect('discussion_detail', pk=discussion.pk)
+            return redirect('discussions:discussion_detail', pk=discussion.pk)
         else:
             messages.error(request, 'Please fix the errors below.')
     else:
@@ -130,9 +130,15 @@ def reply_to_discussion(request, pk):
         messages.error(request, 'You must be enrolled in this course to reply.')
         return redirect('course_detail', slug=course.slug)
 
+    next_url = request.POST.get('next') or request.META.get('HTTP_REFERER')
+
     if discussion.is_closed:
         messages.warning(request, 'This discussion is closed for new replies.')
-        return redirect('discussion_detail', pk=discussion.pk)
+        if next_url:
+            from django.utils.http import url_has_allowed_host_and_scheme
+            if url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}, require_https=request.is_secure()):
+                return redirect(next_url)
+        return redirect('discussions:discussion_detail', pk=discussion.pk)
 
     if request.method == 'POST':
         form = DiscussionReplyForm(request.POST)
@@ -158,7 +164,13 @@ def reply_to_discussion(request, pk):
                 )
 
             messages.success(request, 'Your reply has been posted!')
-            return redirect('discussion_detail', pk=discussion.pk)
+
+            # Redirect back to the page the user came from (engagement, dashboard, etc.)
+            if next_url:
+                from django.utils.http import url_has_allowed_host_and_scheme
+                if url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}, require_https=request.is_secure()):
+                    return redirect(next_url)
+            return redirect('discussions:discussion_detail', pk=discussion.pk)
     else:
         form = DiscussionReplyForm()
 
