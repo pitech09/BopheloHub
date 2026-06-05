@@ -40,6 +40,10 @@ class CustomLoginView(LoginView):
     def get_success_url(self):
         if self.request.user.is_superuser:
             return reverse('owner_dashboard')
+        
+        if self.request.user.is_instructor:
+            return reverse('instructor_dashboard')
+        
         return reverse('profile')
 
 class ProfileView(LoginRequiredMixin, TemplateView):

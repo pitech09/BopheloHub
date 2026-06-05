@@ -107,31 +107,19 @@ def certificate_download(request, pk):
         spaceAfter=10
     )
     
-    # Create a logo drawing
-    def create_logo():
-        """Create a simple logo for BopheloHub."""
-        d = Drawing(100, 40)
-        
-        # Draw a graduation cap shape
-        # Cap top
-        d.add(Rect(20, 25, 60, 10, fillColor=colors.HexColor('#1a1a2e'), strokeColor=colors.HexColor('#1a1a2e'), strokeWidth=1))
-        # Cap bottom
-        d.add(Rect(10, 20, 80, 5, fillColor=colors.HexColor('#1a1a2e'), strokeColor=colors.HexColor('#1a1a2e'), strokeWidth=1))
-        # Tassel
-        d.add(String(75, 25, '●', fontSize=12, fillColor=colors.HexColor('#e94560')))
-        
-        # Platform name
-        d.add(String(15, 8, 'BopheloHub', fontSize=14, fillColor=colors.HexColor('#1a1a2e'), fontName='Helvetica-Bold'))
-        
-        return d
     
     # Add content
     elements.append(Spacer(1, 0.3*inch))
     
     # Logo at top center
-    logo = create_logo()
-    elements.append(logo)
-    
+    logo_path = 'static/images/logo.png'  # Update with your actual logo path
+    try:
+        logo = Image(logo_path, width=1.5*inch, height=1.5*inch)
+        logo.hAlign = 'CENTER'
+        elements.append(logo)
+    except Exception as e:
+        # If logo fails to load, just skip it
+        pass
     elements.append(Spacer(1, 0.3*inch))
     
     # Decorative line
