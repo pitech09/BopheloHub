@@ -34,10 +34,12 @@ INSTALLED_APPS = [
     'django.contrib.humanize',
 
     # Third-party
+    'cloudinary_storage',
     'django_ckeditor_5',  
     'crispy_forms',
     'crispy_bootstrap5',
     "whitenoise.runserver_nostatic",
+    'cloudinary',
     # Local apps (order matters for some dependencies, but generally safe)
     'accounts',
     'instructors',
@@ -153,7 +155,13 @@ STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 
-# ── Media files ───────────────────────────────────────────────────
+# ── Media files (Cloudinary) ──────────────────────────────────────
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': config('CLOUDINARY_CLOUD_NAME', default=''),
+    'API_KEY': config('CLOUDINARY_API_KEY', default=''),
+    'API_SECRET': config('CLOUDINARY_API_SECRET', default=''),
+}
+
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
@@ -234,7 +242,7 @@ CKEDITOR_CONFIGS = {
 
 STORAGES = {
     "default": {
-        "BACKEND": "django.core.files.storage.FileSystemStorage",
+        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
     },
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
@@ -242,7 +250,7 @@ STORAGES = {
 }
 
 CKEDITOR_5_FILE_UPLOAD_PERMISSION = "staff"
-CKEDITOR_5_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
+CKEDITOR_5_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
 
 
 # ── Logging ───────────────────────────────────────────────────────

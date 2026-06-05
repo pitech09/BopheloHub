@@ -114,8 +114,8 @@ a:active,
 
 .brand-logo {
     display: block;
-    width: 18px;
-    height: 16px;
+    width: 21.6px;
+    height: 19.2px;
     object-fit: cover;
     object-position: center;
     border-radius: 8px;
@@ -2418,8 +2418,8 @@ body.has-course-detail main.py-4 {
     }
 
     .brand-logo {
-        width: 18px;
-        height: 16px;
+        width: 21.6px;
+        height: 19.2px;
         border-radius: 8px;
     }
 
