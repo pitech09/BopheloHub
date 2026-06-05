@@ -350,6 +350,9 @@
                                     <i class="bi bi-play-circle me-2"></i>Continue Learning
                                 </a>
                             {% endif %}
+                            <a href="{% url 'discussions:course_discussions' course.slug %}" class="btn btn-outline-info w-100 mb-2">
+                                <i class="bi bi-chat-dots me-2"></i>View Discussions
+                            </a>
                             <a href="{% url 'student_dashboard' %}" class="btn btn-outline-primary w-100">
                                 <i class="bi bi-speedometer2 me-2"></i>Go to Dashboard
                             </a>

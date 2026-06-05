@@ -1,8 +1,9 @@
-# Task Progress - Improve Profile Page
+# Instructor Dashboard Enhancement - Task Progress
 
-- [x] Analyze existing codebase (models, views, templates, CSS)
-- [x] Add profile edit form (accounts/forms.py)
-- [x] Rewrite ProfileView to pass rich context (accounts/views.py)
-- [x] Redesign profile template with tabs, stats, courses, certificates (templates/accounts/profile.html)
-- [x] Add profile-specific CSS (static/css/style.css)
-- [x] Verify the implementation works
+- [x] Analyze existing codebase (models, views, templates, URLs)
+- [x] Create Discussion model for course forums
+- [x] Create Discussion app structure (models, admin, migrations)
+- [x] Update InstructorDashboardView with rich context data
+- [x] Completely revamp instructor_dashboard.html template
+- [x] Add custom template tag for dict access
+- [x] Run migrations and verify everything works

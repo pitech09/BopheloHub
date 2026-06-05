@@ -1,24 +1,522 @@
 {% extends 'base.html' %}
+{% load humanize %}
+{% load static %}
+{% load dashboard_extras %}
+
+{% block title %}Instructor Dashboard - {{ user.get_full_name|default:user.username }}{% endblock %}
+
 {% block content %}
-<h2>My Courses</h2>
-<a href="{% url 'course_create' %}" class="btn btn-primary mb-3">Create New Course</a>
-<div class="row">
-    {% for course in courses %}
-    <div class="col-md-4 mb-3">
-        <div class="card">
-            {% if course.thumbnail %}
-            <img src="{{ course.thumbnail.url }}" class="card-img-top" alt="{{ course.title }}">
-            {% endif %}
-            <div class="card-body">
-                <h5 class="card-title">{{ course.title }}</h5>
-                <p class="card-text">{{ course.description|safe|truncatewords:20 }}</p>
-                <a href="{% url 'course_edit' course.pk %}" class="btn btn-sm btn-outline-primary">Edit</a>
-                <a href="{% url 'curriculum' course.pk %}" class="btn btn-sm btn-outline-success">Curriculum</a>
+<div class="container-fluid px-4">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">
+                <i class="bi bi-chalkboard-teacher me-2"></i>
+                Welcome back, {{ user.get_full_name|default:user.username }}
+            </h2>
+            <p class="text-muted mb-0">Here's what's happening with your courses today.</p>
+        </div>
+        <div>
+            <a href="{% url 'course_create' %}" class="btn btn-primary">
+                <i class="bi bi-plus-lg me-1"></i> Create New Course
+            </a>
+        </div>
+    </div>
+
+    <!-- Stats Cards Row -->
+    <div class="row g-3 mb-4">
+        <div class="col-xl-2 col-lg-4 col-md-6">
+            <div class="card stat-card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="stat-icon bg-primary bg-opacity-10 rounded-3 p-3 me-3">
+                            <i class="bi bi-book text-primary fs-4"></i>
+                        </div>
+                        <div>
+                            <h6 class="text-muted mb-1">Total Courses</h6>
+                            <h3 class="mb-0 fw-bold">{{ total_courses }}</h3>
+                            <small class="text-success">{{ published_courses }} published</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-lg-4 col-md-6">
+            <div class="card stat-card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="stat-icon bg-success bg-opacity-10 rounded-3 p-3 me-3">
+                            <i class="bi bi-people text-success fs-4"></i>
+                        </div>
+                        <div>
+                            <h6 class="text-muted mb-1">Students</h6>
+                            <h3 class="mb-0 fw-bold">{{ total_students }}</h3>
+                            <small class="text-success">{{ total_enrollments }} total enrollments</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-lg-4 col-md-6">
+            <div class="card stat-card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="stat-icon bg-warning bg-opacity-10 rounded-3 p-3 me-3">
+                            <i class="bi bi-star text-warning fs-4"></i>
+                        </div>
+                        <div>
+                            <h6 class="text-muted mb-1">Avg Rating</h6>
+                            <h3 class="mb-0 fw-bold">{{ average_rating }}</h3>
+                            <small class="text-muted">
+                                <i class="bi bi-star-fill text-warning"></i>
+                                <i class="bi bi-star-fill text-warning"></i>
+                                <i class="bi bi-star-fill text-warning"></i>
+                                <i class="bi bi-star-fill text-warning"></i>
+                                <i class="bi bi-star-fill text-warning"></i>
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-lg-4 col-md-6">
+            <div class="card stat-card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="stat-icon bg-info bg-opacity-10 rounded-3 p-3 me-3">
+                            <i class="bi bi-chat-dots text-info fs-4"></i>
+                        </div>
+                        <div>
+                            <h6 class="text-muted mb-1">Discussions</h6>
+                            <h3 class="mb-0 fw-bold">{{ recent_discussions|length }}</h3>
+                            <small class="text-danger">{{ unanswered_discussions|length }} unanswered</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-lg-4 col-md-6">
+            <div class="card stat-card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="stat-icon bg-purple bg-opacity-10 rounded-3 p-3 me-3">
+                            <i class="bi bi-cash-coin text-purple fs-4"></i>
+                        </div>
+                        <div>
+                            <h6 class="text-muted mb-1">Your Earnings ({{ commission_rate }}%)</h6>
+                            <h3 class="mb-0 fw-bold">M{{ total_revenue|floatformat:0|intcomma }}</h3>
+                            <small class="text-muted">M{{ gross_revenue|floatformat:0|intcomma }} gross sales</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-lg-4 col-md-6">
+            <div class="card stat-card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="stat-icon bg-danger bg-opacity-10 rounded-3 p-3 me-3">
+                            <i class="bi bi-trophy text-danger fs-4"></i>
+                        </div>
+                        <div>
+                            <h6 class="text-muted mb-1">Top Course</h6>
+                            <h6 class="mb-0 fw-bold text-truncate" style="max-width: 120px;">
+                                {{ top_course.title|truncatechars:20|default:"—" }}
+                            </h6>
+                            <small class="text-muted">{{ top_course.enrolled_count|default:0 }} enrolled</small>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-    {% empty %}
-    <p>No courses yet. <a href="{% url 'course_create' %}">Create one</a></p>
-    {% endfor %}
+
+    <div class="row g-4">
+        <!-- LEFT COLUMN: Courses List + Enrollment Table -->
+        <div class="col-lg-8">
+            <!-- Section: My Courses -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                    <h5 class="mb-0 fw-bold"><i class="bi bi-collection me-2"></i>My Courses</h5>
+                    <a href="{% url 'course_create' %}" class="btn btn-sm btn-outline-primary">+ New</a>
+                </div>
+                <div class="card-body p-0">
+                    {% if courses %}
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Course</th>
+                                    <th class="text-center">Students</th>
+                                    <th class="text-center">Rating</th>
+                                    <th class="text-center">Discussions</th>
+                                    <th class="text-center">Status</th>
+                                    <th class="text-end">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for course in courses %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            {% if course.thumbnail %}
+                                            <img src="{{ course.thumbnail.url }}" alt="{{ course.title }}"
+                                                 class="rounded me-2" style="width: 40px; height: 30px; object-fit: cover;">
+                                            {% else %}
+                                            <div class="rounded me-2 bg-light d-flex align-items-center justify-content-center"
+                                                 style="width: 40px; height: 30px;">
+                                                <i class="bi bi-image text-muted"></i>
+                                            </div>
+                                            {% endif %}
+                                            <div>
+                                                <a href="{% url 'course_edit' course.pk %}"
+                                                   class="text-decoration-none fw-semibold text-dark">
+                                                    {{ course.title|truncatechars:30 }}
+                                                </a>
+                                                <br>
+                                                <small class="text-muted">{{ course.total_sections }} sections</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="text-center fw-semibold">{{ course.enrolled_count }}</td>
+                                    <td class="text-center">
+                                        {% if course.average_rating %}
+                                        <span class="text-warning">
+                                            {% for i in "12345"|make_list %}
+                                                {% if forloop.counter <= course.average_rating|floatformat:0 %}
+                                                <i class="bi bi-star-fill" style="font-size: 0.7rem;"></i>
+                                                {% else %}
+                                                <i class="bi bi-star" style="font-size: 0.7rem;"></i>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </span>
+                                        <small class="text-muted">({{ course.total_reviews }})</small>
+                                        {% else %}
+                                        <span class="text-muted">—</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-info bg-opacity-10 text-info">
+                                            {{ course.discussion_count }}
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        {% if course.is_published %}
+                                        <span class="badge bg-success">Published</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">Draft</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{% url 'course_edit' course.pk %}"
+                                               class="btn btn-outline-primary" title="Edit">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                            <a href="{% url 'curriculum' course.pk %}"
+                                               class="btn btn-outline-success" title="Curriculum">
+                                                <i class="bi bi-list-check"></i>
+                                            </a>
+                                            <a href="#students-{{ course.id }}"
+                                               class="btn btn-outline-info" title="View Students"
+                                               data-bs-toggle="collapse">
+                                                <i class="bi bi-people"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <!-- Student list row (collapsible) -->
+                                <tr class="collapse" id="students-{{ course.id }}">
+                                    <td colspan="6" class="bg-light p-3">
+                                        {% with students_data=course_students|dictsort:course.id %}
+                                            {% with data=course_students|default:None %}
+                                                {% if data and course.id in data.keys %}
+                                                    {% with cd=data|dict_key:course.id %}
+                                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                                        <h6 class="mb-0">
+                                                            <i class="bi bi-people-fill me-1"></i>
+                                                            Enrolled Students ({{ cd.students_count }})
+                                                        </h6>
+                                                        <small class="text-muted">
+                                                            <i class="bi bi-clock me-1"></i>Recent first
+                                                        </small>
+                                                    </div>
+                                                    <div class="table-responsive">
+                                                        <table class="table table-sm mb-0">
+                                                            <thead>
+                                                                <tr>
+                                                                    <th>Name</th>
+                                                                    <th>Email</th>
+                                                                    <th>Progress</th>
+                                                                    <th>Status</th>
+                                                                    <th>Enrolled</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                {% for enrollment in cd.students %}
+                                                                <tr>
+                                                                    <td>{{ enrollment.user.get_full_name|default:enrollment.user.username }}</td>
+                                                                    <td><small>{{ enrollment.user.email }}</small></td>
+                                                                    <td>
+                                                                        <div class="progress" style="height: 6px; width: 80px;">
+                                                                            <div class="progress-bar bg-success"
+                                                                                 style="width: {{ enrollment.progress|floatformat:0 }}%"></div>
+                                                                        </div>
+                                                                        <small class="text-muted">{{ enrollment.progress|floatformat:0 }}%</small>
+                                                                    </td>
+                                                                    <td>
+                                                                        {% if enrollment.status == 'active' %}
+                                                                        <span class="badge bg-success bg-opacity-10 text-success">Active</span>
+                                                                        {% elif enrollment.status == 'pending' %}
+                                                                        <span class="badge bg-warning bg-opacity-10 text-warning">Pending</span>
+                                                                        {% else %}
+                                                                        <span class="badge bg-danger bg-opacity-10 text-danger">Inactive</span>
+                                                                        {% endif %}
+                                                                    </td>
+                                                                    <td><small>{{ enrollment.enrolled_at|date:"M d, Y" }}</small></td>
+                                                                </tr>
+                                                                {% empty %}
+                                                                <tr>
+                                                                    <td colspan="5" class="text-center text-muted py-3">
+                                                                        <i class="bi bi-inbox me-1"></i>No students enrolled yet.
+                                                                    </td>
+                                                                </tr>
+                                                                {% endfor %}
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                    {% if cd.has_more %}
+                                                    <div class="text-center mt-2">
+                                                        <a href="#" class="btn btn-sm btn-outline-secondary">
+                                                            View all {{ cd.students_count }} students
+                                                        </a>
+                                                    </div>
+                                                    {% endif %}
+                                                    {% endwith %}
+                                                {% endif %}
+                                            {% endwith %}
+                                        {% endwith %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="bi bi-book text-muted" style="font-size: 3rem;"></i>
+                        <h5 class="mt-3 text-muted">No courses yet</h5>
+                        <p class="text-muted">Create your first course to get started.</p>
+                        <a href="{% url 'course_create' %}" class="btn btn-primary">
+                            <i class="bi bi-plus-lg me-1"></i>Create Course
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Recent Enrollments -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0 fw-bold"><i class="bi bi-clock-history me-2"></i>Recent Enrollments</h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if recent_enrollments %}
+                    <div class="list-group list-group-flush">
+                        {% for enrollment in recent_enrollments %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center py-3">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-sm bg-primary bg-opacity-10 rounded-2 d-flex align-items-center justify-content-center me-3"
+                                     style="width: 36px; height: 36px;">
+                                    <i class="bi bi-person text-primary"></i>
+                                </div>
+                                <div>
+                                    <strong>{{ enrollment.user.get_full_name|default:enrollment.user.username }}</strong>
+                                    <small class="text-muted d-block">
+                                        enrolled in <a href="{% url 'course_edit' enrollment.course.pk %}" class="text-decoration-none">{{ enrollment.course.title|truncatechars:40 }}</a>
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <small class="text-muted d-block">{{ enrollment.enrolled_at|naturaltime }}</small>
+                                {% if enrollment.status == 'active' %}
+                                <span class="badge bg-success bg-opacity-10 text-success">Active</span>
+                                {% elif enrollment.status == 'pending' %}
+                                <span class="badge bg-warning bg-opacity-10 text-warning">Pending</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4 text-muted">
+                        <i class="bi bi-inbox me-1"></i> No enrollments yet.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN: Discussions + Reviews -->
+        <div class="col-lg-4">
+            <!-- Section: Unanswered Discussions -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="bi bi-chat-dots me-2"></i>Discussions
+                        {% if unanswered_discussions %}
+                        <span class="badge bg-danger ms-2">{{ unanswered_discussions|length }}</span>
+                        {% endif %}
+                    </h5>
+                    <small class="text-muted">Recent 10</small>
+                </div>
+                <div class="card-body p-0">
+                    {% if recent_discussions %}
+                    <div class="list-group list-group-flush">
+                        {% for discussion in recent_discussions %}
+                        <div class="list-group-item py-3">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="w-100">
+                                    <div class="d-flex justify-content-between">
+                                        <a href="#" class="text-decoration-none fw-semibold text-dark">
+                                            {{ discussion.title|truncatechars:40 }}
+                                        </a>
+                                        {% if discussion.is_pinned %}
+                                        <span class="badge bg-warning bg-opacity-10 text-warning" title="Pinned">
+                                            <i class="bi bi-pin-angle-fill"></i>
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                    <small class="text-muted d-block">
+                                        <i class="bi bi-person me-1"></i>{{ discussion.user.get_full_name|default:discussion.user.username }}
+                                        in <strong>{{ discussion.course.title|truncatechars:25 }}</strong>
+                                        <span class="ms-2">{{ discussion.created_at|naturaltime }}</span>
+                                    </small>
+                                    <div class="mt-1">
+                                        {% if discussion.reply_count == 0 %}
+                                        <span class="badge bg-danger bg-opacity-10 text-danger">
+                                            <i class="bi bi-exclamation-circle me-1"></i>No replies
+                                        </span>
+                                        {% else %}
+                                        <span class="badge bg-success bg-opacity-10 text-success">
+                                            <i class="bi bi-chat me-1"></i>{{ discussion.reply_count }} replies
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4 text-muted">
+                        <i class="bi bi-chat-dots" style="font-size: 2rem;"></i>
+                        <p class="mt-2">No discussions yet.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Unanswered Alert -->
+            {% if unanswered_discussions %}
+            <div class="alert alert-warning border-0 shadow-sm mb-4">
+                <div class="d-flex align-items-start">
+                    <i class="bi bi-exclamation-triangle-fill me-2 mt-1"></i>
+                    <div>
+                        <h6 class="alert-heading mb-1">Unanswered Questions</h6>
+                        <p class="mb-1 small">{{ unanswered_discussions|length }} discussion{{ unanswered_discussions|pluralize }} need{{ unanswered_discussions|pluralize:"s," }} your response.</p>
+                        <div class="mt-2">
+                            {% for d in unanswered_discussions %}
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <small>
+                                    <strong>{{ d.course.title|truncatechars:20 }}</strong>:
+                                    {{ d.title|truncatechars:30 }}
+                                </small>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Recent Reviews -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0 fw-bold"><i class="bi bi-star me-2"></i>Recent Reviews</h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if recent_reviews %}
+                    <div class="list-group list-group-flush">
+                        {% for review in recent_reviews %}
+                        <div class="list-group-item py-3">
+                            <div class="d-flex justify-content-between">
+                                <strong>{{ review.user.get_full_name|default:review.user.username }}</strong>
+                                <span class="text-warning">
+                                    {% for i in "12345"|make_list %}
+                                        {% if forloop.counter <= review.rating %}
+                                        <i class="bi bi-star-fill" style="font-size: 0.7rem;"></i>
+                                        {% else %}
+                                        <i class="bi bi-star" style="font-size: 0.7rem;"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                </span>
+                            </div>
+                            <small class="text-muted d-block">
+                                on <strong>{{ review.course.title|truncatechars:30 }}</strong>
+                                · {{ review.created_at|naturaltime }}
+                            </small>
+                            {% if review.comment %}
+                            <p class="mt-1 mb-0 small">{{ review.comment|truncatechars:100 }}</p>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4 text-muted">
+                        <i class="bi bi-star" style="font-size: 2rem;"></i>
+                        <p class="mt-2">No reviews yet.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+<style>
+    .stat-card {
+        transition: transform 0.2s ease;
+    }
+    .stat-card:hover {
+        transform: translateY(-3px);
+    }
+    .bg-purple {
+        background-color: #6f42c1 !important;
+    }
+    .text-purple {
+        color: #6f42c1 !important;
+    }
+    .bg-opacity-10 {
+        --bs-bg-opacity: 0.1;
+    }
+    .avatar-sm {
+        flex-shrink: 0;
+    }
+</style>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-open student section if hash matches
+    const hash = window.location.hash;
+    if (hash && hash.startsWith('#students-')) {
+        const el = document.querySelector(hash);
+        if (el) {
+            new bootstrap.Collapse(el, { toggle: true });
+        }
+    }
+});
+</script>
+{% endblock %}
 {% endblock %}

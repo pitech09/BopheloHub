@@ -13,10 +13,13 @@
                     <!-- Avatar -->
                     <div class="profile-avatar-wrapper">
                         {% if user.profile_picture %}
-                            <img src="{{ user.profile_picture.url }}" alt="{{ user.get_full_name }}" class="profile-avatar">
+                            <img src="{{ user.profile_picture.url }}" height="80px" width="80px" style="border-radius: 50%;
+    object-fit: cover;
+    background:
+        radial-gradient(circle at 50% 50%, rgba(0, 113, 227, 0.12), rgba(255, 255, 255, 0) 70%);" alt="{{ user.get_full_name }}" class="profile-avatar">
                         {% else %}
                             <div class="profile-avatar profile-avatar-placeholder">
-                                {{ user.get_full_name|default:user.email|first|upper }}
+                                {{ user.get_full_name}}
                             </div>
                         {% endif %}
                         <label for="id_profile_picture" class="avatar-edit-btn" title="Change photo">
@@ -25,7 +28,6 @@
                     </div>
                     <div>
                         <h1 class="profile-name">{{ user.get_full_name|default:"Welcome!" }}</h1>
-                        <p class="profile-email mb-1">{{ user.email }}</p>
                         <div class="d-flex align-items-center gap-2 flex-wrap">
                             {% if user.is_instructor and user.instructor_profile %}
                                 {% if user.instructor_profile.status == 'verified' %}

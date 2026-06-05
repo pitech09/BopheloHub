@@ -1273,6 +1273,14 @@ body.has-course-detail main.py-4 {
     border-top: 1px solid var(--border-subtle);
     padding: 1.25rem 1.5rem;
 }
+.profile-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    background:
+        radial-gradient(circle at 50% 50%, rgba(0, 113, 227, 0.12), rgba(255, 255, 255, 0) 70%);
+}
 
 /* Avatar */
 .avatar {

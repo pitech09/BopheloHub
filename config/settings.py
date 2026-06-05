@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'notifications',
     'assessments',
     'owner',
+    'discussions',
 ]
 
 MIDDLEWARE = [

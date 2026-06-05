@@ -35,15 +35,106 @@ class InstructorDashboardView(InstructorRequiredMixin, ListView):
     def get_queryset(self):
         return Course.objects.filter(instructor=self.request.user).annotate(
             enrolled_count=Count('enrollments'),
-            average_rating=Avg('reviews__rating')
+            average_rating=Avg('reviews__rating'),
+            total_reviews=Count('reviews'),
+            total_sections=Count('sections', distinct=True),
+            discussion_count=Count('discussions', distinct=True),
         ).order_by('-created_at')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         courses = self.get_queryset()
-        context['total_enrollments'] = Enrollment.objects.filter(course__in=courses).count()
-        context['total_revenue'] = sum(c.price for c in courses if c.price > 0)
-        context['average_rating'] = courses.aggregate(Avg('average_rating'))['average_rating__avg'] or 0
+        user = self.request.user
+
+        # ── Overall Stats ──
+        total_courses = courses.count()
+        published_courses = courses.filter(is_published=True).count()
+        active_enrollments = Enrollment.objects.filter(course__in=courses, status='active').count()
+        pending_enrollments = Enrollment.objects.filter(course__in=courses, status='pending').count()
+        total_enrollments = active_enrollments + pending_enrollments
+        avg_rating = courses.aggregate(Avg('average_rating'))['average_rating__avg'] or 0
+        total_students = Enrollment.objects.filter(
+            course__in=courses, status='active'
+        ).values('user').distinct().count()
+
+        # ── Revenue Calculation (85% instructor commission on verified payments) ──
+        from payments.models import Payment
+        from django.db.models import Sum
+        INSTRUCTOR_COMMISSION = 0.85  # 85% payout rate
+
+        verified_payments = Payment.objects.filter(
+            course__in=courses,
+            status='verified'
+        ).aggregate(total=Sum('amount'))
+        gross_revenue = verified_payments['total'] or 0
+        net_revenue = float(gross_revenue) * INSTRUCTOR_COMMISSION  # Instructor's 85% cut
+
+        context.update({
+            'total_courses': total_courses,
+            'published_courses': published_courses,
+            'total_enrollments': total_enrollments,
+            'total_students': total_students,
+            'total_revenue': net_revenue,
+            'gross_revenue': float(gross_revenue),
+            'commission_rate': int(INSTRUCTOR_COMMISSION * 100),
+            'average_rating': round(avg_rating, 1),
+        })
+
+        # ── Top Performing Course ──
+        top_course = courses.order_by('-enrolled_count').first()
+        context['top_course'] = top_course
+
+        # ── Recent Enrollments (last 5) ──
+        recent_enrollments = Enrollment.objects.filter(
+            course__in=courses
+        ).select_related('user', 'course').order_by('-enrolled_at')[:5]
+        context['recent_enrollments'] = recent_enrollments
+
+        # ── Enrollments per course (for chart/data) ──
+        enrollment_data = []
+        for c in courses:
+            if c.enrolled_count > 0:
+                enrollment_data.append({
+                    'title': c.title,
+                    'count': c.enrolled_count,
+                })
+        context['enrollment_data'] = enrollment_data
+
+        # ── Students per course ──
+        course_students = {}
+        for c in courses:
+            students = Enrollment.objects.filter(
+                course=c, status='active'
+            ).select_related('user').order_by('-enrolled_at')
+            course_students[c.id] = {
+                'course': c,
+                'students_count': students.count(),
+                'students': students[:10],  # Show top 10
+                'has_more': students.count() > 10,
+            }
+        context['course_students'] = course_students
+
+        # ── Recent Discussions per course ──
+        from discussions.models import Discussion
+        recent_discussions = Discussion.objects.filter(
+            course__in=courses
+        ).select_related('user', 'course').order_by('-created_at')[:10]
+        context['recent_discussions'] = recent_discussions
+
+        # Unanswered discussions (no replies)
+        unanswered = Discussion.objects.filter(
+            course__in=courses,
+            is_closed=False
+        ).annotate(reply_count=Count('replies')).filter(reply_count=0).order_by('-created_at')
+        context['unanswered_discussions'] = unanswered[:5]
+
+        # ── Reviews stats per course ──
+        from reviews.models import Review
+        recent_reviews = Review.objects.filter(
+            course__in=courses
+        ).select_related('user', 'course').order_by('-created_at')[:5]
+        context['recent_reviews'] = recent_reviews
+
         return context
 
 
