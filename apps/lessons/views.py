@@ -392,12 +392,20 @@ class LessonCreateView(InstructorRequiredMixin, CreateView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['section'] = get_object_or_404(Section, pk=self.kwargs.get('section_pk'))
+        context['section'] = get_object_or_404(
+            Section,
+            pk=self.kwargs.get('section_pk'),
+            course__instructor=self.request.user,
+        )
         context['course'] = context['section'].course
         return context
     
     def form_valid(self, form):
-        form.instance.section_id = self.kwargs.get('section_pk')
+        form.instance.section = get_object_or_404(
+            Section,
+            pk=self.kwargs.get('section_pk'),
+            course__instructor=self.request.user,
+        )
         return super().form_valid(form)
 
 
@@ -414,6 +422,9 @@ class LessonUpdateView(InstructorRequiredMixin, UpdateView):
         context['course'] = self.object.section.course
         return context
 
+    def get_queryset(self):
+        return Lesson.objects.filter(section__course__instructor=self.request.user)
+
 
 class LessonDeleteView(InstructorRequiredMixin, DeleteView):
     model = Lesson
@@ -421,6 +432,9 @@ class LessonDeleteView(InstructorRequiredMixin, DeleteView):
     
     def get_success_url(self):
         return reverse_lazy('curriculum', kwargs={'pk': self.object.section.course.pk})
+
+    def get_queryset(self):
+        return Lesson.objects.filter(section__course__instructor=self.request.user)
 
 
 class SectionCreateView(InstructorRequiredMixin, CreateView):
@@ -433,11 +447,19 @@ class SectionCreateView(InstructorRequiredMixin, CreateView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['course'] = get_object_or_404(Course, pk=self.kwargs.get('course_pk'))
+        context['course'] = get_object_or_404(
+            Course,
+            pk=self.kwargs.get('course_pk'),
+            instructor=self.request.user,
+        )
         return context
     
     def form_valid(self, form):
-        form.instance.course_id = self.kwargs.get('course_pk')
+        form.instance.course = get_object_or_404(
+            Course,
+            pk=self.kwargs.get('course_pk'),
+            instructor=self.request.user,
+        )
         return super().form_valid(form)
 
 
@@ -454,6 +476,9 @@ class SectionUpdateView(InstructorRequiredMixin, UpdateView):
         context['course'] = self.object.course
         return context
 
+    def get_queryset(self):
+        return Section.objects.filter(course__instructor=self.request.user)
+
 
 class SectionDeleteView(InstructorRequiredMixin, DeleteView):
     model = Section
@@ -461,6 +486,9 @@ class SectionDeleteView(InstructorRequiredMixin, DeleteView):
     
     def get_success_url(self):
         return reverse_lazy('curriculum', kwargs={'pk': self.object.course.pk})
+
+    def get_queryset(self):
+        return Section.objects.filter(course__instructor=self.request.user)
 
 
 class CurriculumView(InstructorRequiredMixin, DetailView):
@@ -483,6 +511,7 @@ class ReorderLessonsView(InstructorRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         section_id = kwargs.get('section_pk')
         lesson_ids = request.POST.getlist('lesson_ids[]')
+        get_object_or_404(Section, pk=section_id, course__instructor=request.user)
         
         for index, lesson_id in enumerate(lesson_ids):
             Lesson.objects.filter(pk=lesson_id, section_id=section_id).update(order=index)
@@ -494,6 +523,7 @@ class ReorderSectionsView(InstructorRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         course_id = kwargs.get('course_pk')
         section_ids = request.POST.getlist('section_ids[]')
+        get_object_or_404(Course, pk=course_id, instructor=request.user)
         
         for index, section_id in enumerate(section_ids):
             Section.objects.filter(pk=section_id, course_id=course_id).update(order=index)

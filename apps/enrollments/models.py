@@ -43,6 +43,9 @@ class Enrollment(models.Model):
         from quizzes.models import Quiz
         return Quiz.objects.filter(lesson__section__course=self.course).prefetch_related('questions')
 
+    def is_free_course(self):
+        return self.course.price == 0
+
     def total_lessons_count(self):
         return sum(section.lessons.count() for section in self.course.sections.all())
 
@@ -54,10 +57,14 @@ class Enrollment(models.Model):
         return total_lessons > 0 and self.completed_lessons_count() >= total_lessons
 
     def quizzes_ready(self):
+        if self.is_free_course():
+            return True
         quizzes = list(self.course_quizzes())
         return bool(quizzes) and all(quiz.questions.exists() for quiz in quizzes)
 
     def passed_required_quizzes(self):
+        if self.is_free_course():
+            return True
         from quizzes.models import UserQuizAttempt
         quizzes = list(self.course_quizzes())
         if not quizzes or not self.quizzes_ready():
@@ -75,6 +82,8 @@ class Enrollment(models.Model):
         return True
 
     def course_quiz_score(self):
+        if self.is_free_course():
+            return 100
         from quizzes.models import UserQuizAttempt
         quizzes = list(self.course_quizzes())
         if not quizzes:
@@ -91,10 +100,14 @@ class Enrollment(models.Model):
         return sum(best_scores) / len(best_scores)
 
     def can_receive_certificate(self):
+        if self.status != 'active' or not self.lessons_complete():
+            return False
+
+        if self.is_free_course():
+            return True
+
         return (
-            self.status == 'active'
-            and self.lessons_complete()
-            and self.quizzes_ready()
+            self.quizzes_ready()
             and self.passed_required_quizzes()
             and self.course_quiz_score() >= 70
         )

@@ -4,7 +4,9 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h2 class="fw-bold mb-1">Curriculum for "{{ course.title }}"</h2>
-            <p class="text-secondary mb-0">Add lessons and create quiz questions. Students need 70% or higher before certificates are issued.</p>
+            <p class="text-secondary mb-0">
+                Add lessons and, for paid courses, create quiz questions. {% if course.price == 0 %}This is a free course, so quizzes are optional.{% else %}Students need 70% or higher before certificates are issued.{% endif %}
+            </p>
         </div>
         <a href="{% url 'section_create' course.pk %}" class="btn btn-sm btn-secondary">
             <i class="bi bi-plus-circle me-1"></i>Add Section
@@ -14,10 +16,21 @@
     {% for section in sections %}
         <div class="card mb-3">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <strong>{{ section.title }}</strong>
-                <a href="{% url 'lesson_create' section.pk %}" class="btn btn-sm btn-primary">
-                    <i class="bi bi-plus-circle me-1"></i>Add Lesson
-                </a>
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <strong>{{ section.title }}</strong>
+                    <span class="badge bg-light text-dark">{{ section.lessons.count }} lesson{{ section.lessons.count|pluralize }}</span>
+                </div>
+                <div class="d-flex gap-2 flex-wrap justify-content-end">
+                    <a href="{% url 'section_update' section.pk %}" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-pencil me-1"></i>Edit
+                    </a>
+                    <a href="{% url 'section_delete' section.pk %}" class="btn btn-sm btn-outline-danger">
+                        <i class="bi bi-trash me-1"></i>Delete
+                    </a>
+                    <a href="{% url 'lesson_create' section.pk %}" class="btn btn-sm btn-primary">
+                        <i class="bi bi-plus-circle me-1"></i>Add Lesson
+                    </a>
+                </div>
             </div>
             <ul class="list-group list-group-flush">
                 {% for lesson in section.lessons.all %}
@@ -30,6 +43,8 @@
                                         Quiz pass mark: {{ lesson.quiz.pass_percentage }}% |
                                         {{ lesson.quiz.questions.count }} question{{ lesson.quiz.questions.count|pluralize }}
                                     </small>
+                                {% elif course.price == 0 %}
+                                    <small class="text-secondary">Quiz optional for free courses.</small>
                                 {% else %}
                                     <small class="text-danger">No quiz questions yet. Certificates require instructor-created questions.</small>
                                 {% endif %}
@@ -37,10 +52,13 @@
                             <div class="d-flex gap-2 flex-wrap justify-content-end">
                                 <a href="{% url 'quiz_manage' lesson.pk %}" class="btn btn-sm {% if lesson.quiz and lesson.quiz.questions.count %}btn-outline-primary{% else %}btn-primary{% endif %}">
                                     <i class="bi bi-question-circle me-1"></i>
-                                    {% if lesson.quiz and lesson.quiz.questions.count %}Manage Quiz{% else %}Create Quiz{% endif %}
+                                    {% if lesson.quiz and lesson.quiz.questions.count %}Manage Quiz{% elif course.price == 0 %}Optional Quiz{% else %}Create Quiz{% endif %}
                                 </a>
                                 <a href="{% url 'lesson_update' lesson.pk %}" class="btn btn-sm btn-outline-secondary">
                                     <i class="bi bi-pencil me-1"></i>Edit
+                                </a>
+                                <a href="{% url 'lesson_delete' lesson.pk %}" class="btn btn-sm btn-outline-danger">
+                                    <i class="bi bi-trash me-1"></i>Delete
                                 </a>
                             </div>
                         </div>
@@ -54,7 +72,9 @@
         <div class="empty-state">
             <div class="empty-state-icon"><i class="bi bi-journal-plus"></i></div>
             <h3>No sections yet</h3>
-            <p class="text-muted">Add a section to begin building your curriculum and quiz questions.</p>
+            <p class="text-muted">
+                Add a section to begin building your curriculum{% if course.price == 0 %}; quiz questions are optional for this free course{% else %} and quiz questions{% endif %}.
+            </p>
         </div>
     {% endfor %}
     <a href="{% url 'instructor_dashboard' %}" class="btn btn-link mt-3">&larr; Back to Dashboard</a>

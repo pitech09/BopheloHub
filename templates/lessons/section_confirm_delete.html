@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+            <h2 class="fw-bold mb-2">Delete Section</h2>
+            <p class="text-secondary mb-4">
+                Are you sure you want to delete <strong>{{ object.title }}</strong>?
+                This will also remove its lessons and related curriculum content.
+            </p>
+            <form method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger">
+                    <i class="bi bi-trash me-1"></i>Delete Section
+                </button>
+                <a href="{% url 'curriculum' object.course.pk %}" class="btn btn-outline-secondary">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

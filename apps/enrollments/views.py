@@ -100,22 +100,27 @@ class CompleteEnrollmentView(LoginRequiredMixin, DetailView):
     def get(self, request, *args, **kwargs):
         enrollment = get_object_or_404(Enrollment, pk=self.kwargs['pk'], user=request.user)
         course = enrollment.course
-        
+        is_free_course = course.price == 0
+
         certificate = enrollment.complete_and_issue_certificate_if_eligible()
         if certificate:
-            
             # Send notification
             Notification.objects.create(
                 user=request.user,
-                message=f'Congratulations! You passed "{course.title}" with at least 70% and your certificate is ready.'
+                message=(
+                    f'Congratulations! Your certificate for "{course.title}" is ready.'
+                    if is_free_course
+                    else f'Congratulations! You passed "{course.title}" with at least 70% and your certificate is ready.'
+                )
             )
             
             return redirect('certificates:certificate_detail', pk=certificate.pk)
 
-        if not enrollment.quizzes_ready():
-            messages.warning(request, 'This course is not certificate-ready yet. The instructor must add quiz questions first.')
-        elif not enrollment.passed_required_quizzes():
-            messages.warning(request, 'Complete all lessons and pass every course quiz with at least 70% to receive your certificate.')
+        if not is_free_course:
+            if not enrollment.quizzes_ready():
+                messages.warning(request, 'This course is not certificate-ready yet. The instructor must add quiz questions first.')
+            elif not enrollment.passed_required_quizzes():
+                messages.warning(request, 'Complete all lessons and pass every course quiz with at least 70% to receive your certificate.')
         
         return redirect('student_dashboard')
 
