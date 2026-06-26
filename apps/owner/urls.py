@@ -15,6 +15,7 @@ from .views import (
     OwnerEnrollmentApproveView,
     OwnerEnrollmentRejectView,
     OwnerInstructorListView,
+    OwnerInstructorDetailView,
     OwnerSystemHealthView,
 )
 
@@ -47,6 +48,7 @@ urlpatterns = [
 
     # Instructor Management
     path('owner/instructors/', OwnerInstructorListView.as_view(), name='owner_instructor_list'),
+    path('owner/instructors/<int:pk>/', OwnerInstructorDetailView.as_view(), name='owner_instructor_detail'),
 
     # System Health
     path('owner/system-health/', OwnerSystemHealthView.as_view(), name='owner_system_health'),

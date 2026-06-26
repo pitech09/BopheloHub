@@ -23,7 +23,7 @@ class HomeView(TemplateView):
         ).order_by('-enrolled_count', '-average_rating')[:6]
         context['categories'] = Category.objects.annotate(
             course_count=Count('courses', filter=Q(courses__is_published=True))
-        ).filter(course_count__gt=0)[:8]
+        ).order_by('name')
         return context
 
 
@@ -218,7 +218,7 @@ class CourseListView(ListView):
         context = super().get_context_data(**kwargs)
         context['categories'] = Category.objects.annotate(
             course_count=Count('courses', filter=Q(courses__is_published=True))
-        ).filter(course_count__gt=0)
+        ).order_by('name')
         return context
 
 

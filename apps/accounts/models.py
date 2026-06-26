@@ -1,4 +1,5 @@
 from django.contrib.auth.models import AbstractUser
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.utils.text import slugify
 
@@ -20,3 +21,15 @@ class User(AbstractUser):
             base = self.email.split('@')[0]
             self.username = slugify(base)[:150] or f"user_{self.pk}"
         super().save(*args, **kwargs)
+
+    def get_instructor_profile(self):
+        """Return the related instructor profile if it exists."""
+        try:
+            return self.instructor_profile
+        except ObjectDoesNotExist:
+            return None
+
+    def get_instructor_status(self):
+        """Return the instructor verification status, or an empty string."""
+        profile = self.get_instructor_profile()
+        return profile.status if profile else ''

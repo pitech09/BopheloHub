@@ -234,7 +234,7 @@ class ApproveInstructorView(OwnerRequiredMixin, DetailView):
         )
 
         messages.success(request, f'{name} has been approved as an instructor.')
-        return redirect('owner_dashboard')
+        return redirect(self.request.META.get('HTTP_REFERER', 'owner_instructor_list'))
 
 
 class RejectInstructorView(OwnerRequiredMixin, DetailView):
@@ -254,7 +254,7 @@ class RejectInstructorView(OwnerRequiredMixin, DetailView):
         )
 
         messages.warning(request, f'Instructor application for {name} has been rejected.')
-        return redirect('owner_dashboard')
+        return redirect(self.request.META.get('HTTP_REFERER', 'owner_instructor_list'))
 
 
 # ==================== Payment Management ====================
@@ -582,6 +582,15 @@ class OwnerInstructorListView(OwnerRequiredMixin, ListView):
         context['rejected_count'] = InstructorProfile.objects.filter(status='rejected').count()
         context['total_count'] = InstructorProfile.objects.count()
         return context
+
+
+class OwnerInstructorDetailView(OwnerRequiredMixin, DetailView):
+    model = InstructorProfile
+    template_name = 'owner/instructor_detail.html'
+    context_object_name = 'profile'
+
+    def get_queryset(self):
+        return InstructorProfile.objects.select_related('user').order_by('-user__date_joined')
 
 
 # ==================== System Data Export / Summary ====================

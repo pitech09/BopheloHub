@@ -1,0 +1,207 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Instructor Review - {{ profile.user.get_full_name|default:profile.user.username }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 instructor-review-page">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <a href="{% url 'owner_instructor_list' %}" class="btn btn-outline-secondary btn-sm rounded-pill">
+                    <i class="bi bi-arrow-left me-1"></i>Back
+                </a>
+                <span class="badge {% if profile.status == 'verified' %}bg-success{% elif profile.status == 'pending' %}bg-warning text-dark{% else %}bg-danger{% endif %} rounded-pill px-3 py-2">
+                    {{ profile.get_status_display }}
+                </span>
+            </div>
+            <h1 class="fw-bold mb-1">{{ profile.user.get_full_name|default:profile.user.username }}</h1>
+            <p class="text-secondary mb-0">{{ profile.user.email }}</p>
+        </div>
+        <div class="d-flex gap-2 flex-wrap justify-content-end">
+            {% if profile.status == 'pending' %}
+            <a href="{% url 'approve_instructor' profile.pk %}" class="btn btn-success rounded-pill">
+                <i class="bi bi-check-lg me-1"></i>Approve
+            </a>
+            <a href="{% url 'reject_instructor' profile.pk %}" class="btn btn-outline-danger rounded-pill">
+                <i class="bi bi-x-lg me-1"></i>Reject
+            </a>
+            {% endif %}
+            <a href="{% url 'owner_user_detail' profile.user.pk %}" class="btn btn-outline-primary rounded-pill">
+                <i class="bi bi-person-badge me-1"></i>User Profile
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center gap-3 mb-4">
+                        <div class="avatar bg-primary text-white d-flex align-items-center justify-content-center flex-shrink-0" style="width: 64px; height: 64px; border-radius: 50%; font-size: 1.5rem;">
+                            {{ profile.user.get_full_name|first|upper|default:profile.user.username|first|upper }}
+                        </div>
+                        <div>
+                            <h5 class="fw-bold mb-1">{{ profile.user.get_full_name|default:profile.user.username }}</h5>
+                            <p class="text-secondary mb-0 small">@{{ profile.user.username }}</p>
+                        </div>
+                    </div>
+
+                    <div class="review-meta">
+                        <div class="review-meta-row">
+                            <span class="text-secondary">Applied</span>
+                            <span>{{ profile.user.date_joined|date:"M d, Y" }}</span>
+                        </div>
+                        <div class="review-meta-row">
+                            <span class="text-secondary">Status</span>
+                            <span class="badge {% if profile.status == 'verified' %}bg-success{% elif profile.status == 'pending' %}bg-warning text-dark{% else %}bg-danger{% endif %}">
+                                {{ profile.get_status_display }}
+                            </span>
+                        </div>
+                        {% if profile.phone %}
+                        <div class="review-meta-row">
+                            <span class="text-secondary">Phone</span>
+                            <span>{{ profile.phone }}</span>
+                        </div>
+                        {% endif %}
+                        {% if profile.website %}
+                        <div class="review-meta-row">
+                            <span class="text-secondary">Website</span>
+                            <a href="{{ profile.website }}" target="_blank" rel="noopener noreferrer" class="text-break">{{ profile.website }}</a>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    {% if profile.headline %}
+                    <div class="mt-4">
+                        <h6 class="fw-bold mb-2">Headline</h6>
+                        <p class="text-muted mb-0">{{ profile.headline }}</p>
+                    </div>
+                    {% endif %}
+
+                    {% if profile.qualifications %}
+                    <div class="mt-4">
+                        <h6 class="fw-bold mb-2">Qualifications</h6>
+                        <p class="text-muted mb-0">{{ profile.qualifications|linebreaksbr }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <h5 class="fw-bold mb-1">Identity Verification</h5>
+                            <p class="text-secondary mb-0 small">Review the uploaded ID document before approving this instructor.</p>
+                        </div>
+                        {% if profile.id_document %}
+                        <a href="{{ profile.id_document.url }}" target="_blank" rel="noopener noreferrer" class="btn btn-outline-secondary btn-sm rounded-pill">
+                            <i class="bi bi-box-arrow-up-right me-1"></i>Open File
+                        </a>
+                        {% endif %}
+                    </div>
+
+                    {% if profile.id_document %}
+                    <div class="id-preview-frame">
+                        <img src="{{ profile.id_document.url }}" alt="Uploaded ID document for {{ profile.user.get_full_name|default:profile.user.username }}" class="img-fluid rounded-4 shadow-sm w-100">
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2">
+                        <div class="small text-secondary">
+                            <i class="bi bi-file-earmark-image me-1"></i>{{ profile.id_document.name|default:"Uploaded document" }}
+                        </div>
+                        <a href="{{ profile.id_document.url }}" download class="btn btn-sm btn-primary rounded-pill">
+                            <i class="bi bi-download me-1"></i>Download ID
+                        </a>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5 bg-light rounded-4">
+                        <i class="bi bi-file-earmark-excel display-4 text-secondary mb-3 d-block"></i>
+                        <h6 class="fw-bold mb-1">No ID document uploaded</h6>
+                        <p class="text-secondary mb-0">This application does not include an identity document yet.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-3">Review Notes</h5>
+                    <div class="row g-3 small">
+                        <div class="col-md-6">
+                            <div class="review-note-box">
+                                <div class="text-secondary mb-1">Email</div>
+                                <div class="fw-semibold text-break">{{ profile.user.email }}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="review-note-box">
+                                <div class="text-secondary mb-1">Application Date</div>
+                                <div class="fw-semibold">{{ profile.user.date_joined|date:"M d, Y" }}</div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="review-note-box">
+                                <div class="text-secondary mb-1">Verification Status</div>
+                                <div class="fw-semibold">
+                                    {% if profile.status == 'pending' %}
+                                    Awaiting decision
+                                    {% elif profile.status == 'verified' %}
+                                    Approved and active
+                                    {% else %}
+                                    Rejected
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .instructor-review-page .review-meta {
+        display: grid;
+        gap: 0.75rem;
+    }
+
+    .instructor-review-page .review-meta-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .instructor-review-page .review-meta-row:last-child {
+        border-bottom: 0;
+        padding-bottom: 0;
+    }
+
+    .id-preview-frame {
+        background: linear-gradient(180deg, #fbfbfd 0%, #f5f5f7 100%);
+        padding: 1rem;
+        border: 1px solid var(--border-subtle);
+        border-radius: 1rem;
+    }
+
+    .review-note-box {
+        background: #fff;
+        border: 1px solid var(--border-subtle);
+        border-radius: 0.9rem;
+        padding: 0.9rem 1rem;
+        height: 100%;
+    }
+
+    @media (max-width: 992px) {
+        .instructor-review-page .review-meta-row {
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+    }
+</style>
+{% endblock %}

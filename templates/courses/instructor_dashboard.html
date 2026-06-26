@@ -6,17 +6,17 @@
 {% block title %}Instructor Dashboard - {{ user.get_full_name|default:user.username }}{% endblock %}
 
 {% block content %}
-<div class="container-fluid px-4">
+<div class="container-fluid px-4 instructor-dashboard">
     <!-- Page Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h2 class="mb-1">
+    <div class="dashboard-header d-flex justify-content-between align-items-center mb-4">
+        <div class="dashboard-header-copy">
+            <h2 class="mb-1 text-nowrap dashboard-title">
                 <i class="bi bi-chalkboard-teacher me-2"></i>
                 Welcome back, {{ user.get_full_name|default:user.username }}
             </h2>
             <p class="text-muted mb-0">Here's what's happening with your courses today.</p>
         </div>
-        <div class="d-flex gap-2">
+        <div class="dashboard-actions d-flex gap-2 flex-shrink-0">
             <a href="{% url 'instructor_engagement' %}" class="btn btn-outline-primary">
                 <i class="bi bi-chat-square-dots me-1"></i> Student Engagement
             </a>
@@ -27,8 +27,8 @@
     </div>
 
     <!-- Stats Cards Row -->
-    <div class="row g-3 mb-4">
-        <div class="col-xl-2 col-lg-4 col-md-6">
+    <div class="dashboard-stats d-flex gap-3 mb-4 flex-nowrap overflow-auto pb-1">
+        <div class="dashboard-stat-col">
             <div class="card stat-card border-0 shadow-sm h-100">
                 <div class="card-body">
                     <div class="d-flex align-items-center">
@@ -44,7 +44,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-xl-2 col-lg-4 col-md-6">
+        <div class="dashboard-stat-col">
             <div class="card stat-card border-0 shadow-sm h-100">
                 <div class="card-body">
                     <div class="d-flex align-items-center">
@@ -60,7 +60,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-xl-2 col-lg-4 col-md-6">
+        <div class="dashboard-stat-col">
             <div class="card stat-card border-0 shadow-sm h-100">
                 <div class="card-body">
                     <div class="d-flex align-items-center">
@@ -82,7 +82,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-xl-2 col-lg-4 col-md-6">
+        <div class="dashboard-stat-col">
             <div class="card stat-card border-0 shadow-sm h-100">
                 <div class="card-body">
                     <div class="d-flex align-items-center">
@@ -98,7 +98,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-xl-2 col-lg-4 col-md-6">
+        <div class="dashboard-stat-col">
             <div class="card stat-card border-0 shadow-sm h-100">
                 <div class="card-body">
                     <div class="d-flex align-items-center">
@@ -114,7 +114,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-xl-2 col-lg-4 col-md-6">
+        <div class="dashboard-stat-col">
             <div class="card stat-card border-0 shadow-sm h-100">
                 <div class="card-body">
                     <div class="d-flex align-items-center">
@@ -134,7 +134,7 @@
         </div>
     </div>
 
-    <div class="row g-4">
+    <div class="dashboard-grid row g-4">
         <!-- LEFT COLUMN: Courses List + Enrollment Table -->
         <div class="col-lg-8">
             <!-- Section: My Courses -->
@@ -554,6 +554,42 @@
 </div>
 
 <style>
+    .instructor-dashboard {
+        overflow-x: hidden;
+    }
+
+    .dashboard-header {
+        gap: 1rem;
+        flex-wrap: nowrap;
+    }
+
+    .dashboard-header-copy {
+        min-width: 0;
+    }
+
+    .dashboard-title {
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .dashboard-stats {
+        scrollbar-width: thin;
+    }
+
+    .dashboard-stats::-webkit-scrollbar {
+        height: 8px;
+    }
+
+    .dashboard-stats::-webkit-scrollbar-thumb {
+        background: rgba(0, 0, 0, 0.16);
+        border-radius: 999px;
+    }
+
+    .dashboard-stat-col {
+        flex: 0 0 260px;
+        min-width: 260px;
+    }
+
     .stat-card {
         transition: transform 0.2s ease;
     }
@@ -571,6 +607,21 @@
     }
     .avatar-sm {
         flex-shrink: 0;
+    }
+
+    @media (max-width: 992px) {
+        .dashboard-header {
+            flex-wrap: wrap;
+            align-items: flex-start !important;
+        }
+
+        .dashboard-title {
+            white-space: normal;
+        }
+
+        .dashboard-actions {
+            flex-wrap: wrap;
+        }
     }
 </style>
 

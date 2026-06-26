@@ -5,40 +5,40 @@
 {% block title %}Payment Management - BopheloHub e-Learning{% endblock %}
 
 {% block content %}
-<div class="container">
+<div class="container-fluid px-4 payment-management-page">
     <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="fw-bold mb-1"><i class="bi bi-cash-stack me-2"></i>Payment Management</h1>
+    <div class="payment-page-header d-flex justify-content-between align-items-center mb-4">
+        <div class="payment-page-title">
+            <h1 class="fw-bold mb-1 text-nowrap"><i class="bi bi-cash-stack me-2"></i>Payment Management</h1>
             <p class="text-secondary mb-0">Review, verify, or reject payment submissions</p>
         </div>
-        <a href="{% url 'owner_dashboard' %}" class="btn btn-outline-primary">
+        <a href="{% url 'owner_dashboard' %}" class="btn btn-outline-primary flex-shrink-0">
             <i class="bi bi-arrow-left me-1"></i>Dashboard
         </a>
     </div>
 
     <!-- Status Filters -->
-    <div class="d-flex flex-wrap gap-2 mb-4">
-        <a href="{% url 'owner_payment_list' %}" class="btn btn-sm rounded-pill {% if not current_status %}btn-primary{% else %}btn-outline-secondary{% endif %}">
-            All <span class="badge bg-light text-dark ms-1">{{ total_count }}</span>
+    <div class="payment-filters d-flex flex-nowrap gap-2 mb-4 overflow-auto pb-1">
+        <a href="{% url 'owner_payment_list' %}" class="btn btn-sm payment-filter-btn rounded-pill text-nowrap {% if not current_status %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+            All <span class="payment-count-badge">{{ total_count }}</span>
         </a>
-        <a href="{% url 'owner_payment_list' %}?status=pending" class="btn btn-sm rounded-pill {% if current_status == 'pending' %}btn-warning{% else %}btn-outline-secondary{% endif %}">
-            <i class="bi bi-clock me-1"></i>Pending <span class="badge bg-light text-dark ms-1">{{ pending_count }}</span>
+        <a href="{% url 'owner_payment_list' %}?status=pending" class="btn btn-sm payment-filter-btn rounded-pill text-nowrap {% if current_status == 'pending' %}btn-warning{% else %}btn-outline-secondary{% endif %}">
+            <i class="bi bi-clock me-1"></i>Pending <span class="payment-count-badge">{{ pending_count }}</span>
         </a>
-        <a href="{% url 'owner_payment_list' %}?status=verified" class="btn btn-sm rounded-pill {% if current_status == 'verified' %}btn-success{% else %}btn-outline-secondary{% endif %}">
-            <i class="bi bi-check-circle me-1"></i>Verified <span class="badge bg-light text-dark ms-1">{{ verified_count }}</span>
+        <a href="{% url 'owner_payment_list' %}?status=verified" class="btn btn-sm payment-filter-btn rounded-pill text-nowrap {% if current_status == 'verified' %}btn-success{% else %}btn-outline-secondary{% endif %}">
+            <i class="bi bi-check-circle me-1"></i>Verified <span class="payment-count-badge">{{ verified_count }}</span>
         </a>
-        <a href="{% url 'owner_payment_list' %}?status=rejected" class="btn btn-sm rounded-pill {% if current_status == 'rejected' %}btn-danger{% else %}btn-outline-secondary{% endif %}">
-            <i class="bi bi-x-circle me-1"></i>Rejected <span class="badge bg-light text-dark ms-1">{{ rejected_count }}</span>
+        <a href="{% url 'owner_payment_list' %}?status=rejected" class="btn btn-sm payment-filter-btn rounded-pill text-nowrap {% if current_status == 'rejected' %}btn-danger{% else %}btn-outline-secondary{% endif %}">
+            <i class="bi bi-x-circle me-1"></i>Rejected <span class="payment-count-badge">{{ rejected_count }}</span>
         </a>
     </div>
 
     <!-- Search -->
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-body">
-            <form method="get" class="d-flex gap-2">
+            <form method="get" class="payment-search d-flex gap-2 flex-nowrap">
                 <input type="text" name="q" class="form-control apple-input" placeholder="Search by reference, email, or course..." value="{{ search_query }}">
-                <button type="submit" class="btn btn-primary rounded-pill"><i class="bi bi-search"></i></button>
+                <button type="submit" class="btn btn-primary rounded-pill flex-shrink-0"><i class="bi bi-search"></i></button>
                 {% if current_status %}
                 <input type="hidden" name="status" value="{{ current_status }}">
                 {% endif %}
@@ -51,29 +51,29 @@
         <div class="card-body p-0">
             {% if payments %}
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
+                <table class="table table-hover align-middle mb-0 payment-table">
                     <thead class="table-light">
                         <tr>
-                            <th>Reference</th>
-                            <th>User</th>
-                            <th>Course</th>
-                            <th class="text-end">Amount</th>
-                            <th>Screenshot</th>
-                            <th>Status</th>
-                            <th>Date</th>
-                            <th class="text-end">Actions</th>
+                            <th class="text-nowrap">Reference</th>
+                            <th class="text-nowrap">User</th>
+                            <th class="text-nowrap">Course</th>
+                            <th class="text-end text-nowrap">Amount</th>
+                            <th class="text-nowrap">Screenshot</th>
+                            <th class="text-nowrap">Status</th>
+                            <th class="text-nowrap">Date</th>
+                            <th class="text-end text-nowrap">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for payment in payments %}
                         <tr>
-                            <td class="fw-semibold small">{{ payment.reference_number }}</td>
+                            <td class="fw-semibold small text-nowrap">{{ payment.reference_number }}</td>
                             <td>
                                 <div class="small fw-semibold">{{ payment.user.get_full_name|default:payment.user.username }}</div>
                                 <div class="small text-secondary">{{ payment.user.email }}</div>
                             </td>
-                            <td class="small">{{ payment.course.title|truncatechars:40 }}</td>
-                            <td class="text-end fw-semibold">M{{ payment.amount|floatformat:2 }}</td>
+                            <td class="small payment-course">{{ payment.course.title|truncatechars:40 }}</td>
+                            <td class="text-end fw-semibold text-nowrap">M{{ payment.amount|floatformat:2 }}</td>
                             <td>
                                 {% if payment.screenshot %}
                                 <a href="{{ payment.screenshot.url }}" target="_blank" class="btn btn-sm btn-outline-secondary rounded-pill">
@@ -91,7 +91,7 @@
                                 <div class="small text-secondary mt-1">by {{ payment.verified_by.get_full_name|default:payment.verified_by.username }}</div>
                                 {% endif %}
                             </td>
-                            <td class="small text-secondary">
+                            <td class="small text-secondary text-nowrap">
                                 <div>{{ payment.paid_at|date:"M d, Y" }}</div>
                                 {% if payment.verified_at %}
                                 <div>Verified: {{ payment.verified_at|date:"M d" }}</div>
@@ -149,4 +149,106 @@
         </div>
     </div>
 </div>
+
+<style>
+    .payment-management-page {
+        overflow-x: hidden;
+    }
+
+    .payment-page-header {
+        gap: 1rem;
+        flex-wrap: nowrap;
+    }
+
+    .payment-page-title {
+        min-width: 0;
+    }
+
+    .payment-filters {
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+    }
+
+    .payment-filters .btn {
+        flex: 0 0 auto;
+    }
+
+    .payment-filter-btn {
+        min-height: 32px;
+        padding: 0.35rem 0.8rem;
+        font-size: 0.8rem;
+        letter-spacing: 0;
+        line-height: 1.1;
+    }
+
+    .payment-count-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 1.6rem;
+        height: 1.35rem;
+        margin-left: 0.45rem;
+        padding: 0 0.45rem;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.92);
+        color: var(--text-primary);
+        font-size: 0.72rem;
+        font-weight: 700;
+        line-height: 1;
+    }
+
+    .btn-primary .payment-count-badge,
+    .btn-success .payment-count-badge,
+    .btn-warning .payment-count-badge,
+    .btn-danger .payment-count-badge {
+        background: rgba(255, 255, 255, 0.22);
+        color: #fff;
+    }
+
+    .payment-filters::-webkit-scrollbar {
+        height: 8px;
+    }
+
+    .payment-filters::-webkit-scrollbar-thumb {
+        background: rgba(0, 0, 0, 0.16);
+        border-radius: 999px;
+    }
+
+    .payment-search .form-control {
+        min-width: 0;
+    }
+
+    .payment-table {
+        min-width: 1100px;
+    }
+
+    .payment-course {
+        max-width: 320px;
+    }
+
+    @media (max-width: 992px) {
+        .payment-page-header {
+            flex-wrap: wrap;
+            align-items: flex-start !important;
+        }
+
+        .payment-page-title h1 {
+            white-space: normal;
+        }
+
+        .payment-search {
+            flex-wrap: wrap !important;
+        }
+
+        .payment-filters {
+            flex-wrap: nowrap !important;
+            overflow-x: auto;
+            overflow-y: hidden;
+        }
+
+        .payment-filters .btn {
+            flex: 0 0 auto;
+        }
+    }
+</style>
 {% endblock %}

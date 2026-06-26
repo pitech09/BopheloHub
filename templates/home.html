@@ -9,16 +9,68 @@
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-lg-8">
-                <h1 class="display-4 fw-bold mb-4">Learn Anything, Anytime, Anywhere</h1>
-                <p class="lead mb-4 fs-5">Join thousands of learners worldwide and master new skills with our expert-led courses</p>
-                <div class="d-flex justify-content-center gap-3">
-                    <a href="{% url 'course_list' %}" class="btn btn-light btn-lg px-4">
-                        <i class="bi bi-compass me-2"></i>Explore Courses
-                    </a>
-                    <a href="{% url 'register_student' %}" class="btn btn-outline-light btn-lg px-4">
-                        <i class="bi bi-person-plus me-2"></i>Get Started
-                    </a>
-                </div>
+                {% if user.is_authenticated %}
+                    {% if user.is_superuser %}
+                        <p class="text-uppercase fw-semibold text-white-50 mb-2">Welcome back, Admin</p>
+                        <h1 class="display-4 fw-bold mb-4">Manage the platform from one place</h1>
+                        <p class="lead mb-4 fs-5">Track revenue, review users, and oversee courses, payments, and instructor approvals.</p>
+                        <div class="d-flex justify-content-center gap-3 flex-wrap">
+                            <a href="{% url 'owner_dashboard' %}" class="btn btn-light btn-lg px-4">
+                                <i class="bi bi-speedometer2 me-2"></i>Go to Dashboard
+                            </a>
+                            <a href="{% url 'owner_instructor_list' %}" class="btn btn-outline-light btn-lg px-4">
+                                <i class="bi bi-person-badge me-2"></i>Review Instructors
+                            </a>
+                        </div>
+                    {% elif user.is_instructor and user.get_instructor_status == 'verified' %}
+                        <p class="text-uppercase fw-semibold text-white-50 mb-2">Welcome back, Instructor</p>
+                        <h1 class="display-4 fw-bold mb-4">Keep building your courses</h1>
+                        <p class="lead mb-4 fs-5">See course performance, respond to learners, and publish more content.</p>
+                        <div class="d-flex justify-content-center gap-3 flex-wrap">
+                            <a href="{% url 'instructor_dashboard' %}" class="btn btn-light btn-lg px-4">
+                                <i class="bi bi-chalkboard-teacher me-2"></i>Instructor Dashboard
+                            </a>
+                            <a href="{% url 'course_create' %}" class="btn btn-outline-light btn-lg px-4">
+                                <i class="bi bi-plus-circle me-2"></i>Create Course
+                            </a>
+                        </div>
+                    {% elif user.is_instructor %}
+                        <p class="text-uppercase fw-semibold text-white-50 mb-2">Welcome back</p>
+                        <h1 class="display-4 fw-bold mb-4">Finish your instructor profile</h1>
+                        <p class="lead mb-4 fs-5">Complete your verification details so the owner can review and approve your teaching account.</p>
+                        <div class="d-flex justify-content-center gap-3 flex-wrap">
+                            <a href="{% url 'profile' %}" class="btn btn-light btn-lg px-4">
+                                <i class="bi bi-person-gear me-2"></i>View Profile
+                            </a>
+                            <a href="{% url 'instructor_apply' %}" class="btn btn-outline-light btn-lg px-4">
+                                <i class="bi bi-file-earmark-text me-2"></i>Complete Application
+                            </a>
+                        </div>
+                    {% else %}
+                        <p class="text-uppercase fw-semibold text-white-50 mb-2">Welcome back</p>
+                        <h1 class="display-4 fw-bold mb-4">Pick up where you left off</h1>
+                        <p class="lead mb-4 fs-5">Continue your learning journey, review progress, and discover new courses tailored for you.</p>
+                        <div class="d-flex justify-content-center gap-3 flex-wrap">
+                            <a href="{% url 'student_dashboard' %}" class="btn btn-light btn-lg px-4">
+                                <i class="bi bi-book me-2"></i>My Dashboard
+                            </a>
+                            <a href="{% url 'course_list' %}" class="btn btn-outline-light btn-lg px-4">
+                                <i class="bi bi-grid me-2"></i>Browse Catalog
+                            </a>
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <h1 class="display-4 fw-bold mb-4">Learn Anything, Anytime, Anywhere</h1>
+                    <p class="lead mb-4 fs-5">Join thousands of learners worldwide and master new skills with our expert-led courses</p>
+                    <div class="d-flex justify-content-center gap-3 flex-wrap">
+                        <a href="{% url 'login' %}" class="btn btn-light btn-lg px-4">
+                            <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+                        </a>
+                        <a href="{% url 'register_student' %}" class="btn btn-outline-light btn-lg px-4">
+                            <i class="bi bi-person-plus me-2"></i>Create Account
+                        </a>
+                    </div>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -189,11 +241,39 @@
 <!-- CTA Section -->
 <div class="hero-section text-center py-5 mb-5">
     <div class="container">
-        <h2 class="fw-bold mb-3">Ready to Start Learning?</h2>
-        <p class="lead mb-4">Join our community of learners and achieve your goals today</p>
-        <a href="{% url 'register_student' %}" class="btn btn-light btn-lg px-5">
-            <i class="bi bi-rocket me-2"></i>Get Started for Free
-        </a>
+        {% if user.is_authenticated %}
+            {% if user.is_superuser %}
+                <h2 class="fw-bold mb-3">Platform overview at a glance</h2>
+                <p class="lead mb-4">Use the owner dashboard to manage instructors, courses, payments, and users.</p>
+                <a href="{% url 'owner_dashboard' %}" class="btn btn-light btn-lg px-5">
+                    <i class="bi bi-speedometer2 me-2"></i>Open Owner Dashboard
+                </a>
+            {% elif user.is_instructor and user.get_instructor_status == 'verified' %}
+                <h2 class="fw-bold mb-3">Keep your course catalog growing</h2>
+                <p class="lead mb-4">Launch more courses, support your learners, and watch your progress.</p>
+                <a href="{% url 'course_create' %}" class="btn btn-light btn-lg px-5">
+                    <i class="bi bi-plus-lg me-2"></i>Create a Course
+                </a>
+            {% elif user.is_instructor %}
+                <h2 class="fw-bold mb-3">Your instructor application is waiting</h2>
+                <p class="lead mb-4">Complete your profile so the owner can review your teaching request.</p>
+                <a href="{% url 'profile' %}" class="btn btn-light btn-lg px-5">
+                    <i class="bi bi-person-gear me-2"></i>Finish Profile
+                </a>
+            {% else %}
+                <h2 class="fw-bold mb-3">Continue learning from your dashboard</h2>
+                <p class="lead mb-4">Go back to your courses, certificates, and progress in one place.</p>
+                <a href="{% url 'student_dashboard' %}" class="btn btn-light btn-lg px-5">
+                    <i class="bi bi-book me-2"></i>Open My Dashboard
+                </a>
+            {% endif %}
+        {% else %}
+            <h2 class="fw-bold mb-3">Ready to start learning?</h2>
+            <p class="lead mb-4">Create an account to explore courses and track your progress.</p>
+            <a href="{% url 'register_student' %}" class="btn btn-light btn-lg px-5">
+                <i class="bi bi-person-plus me-2"></i>Create Account
+            </a>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

@@ -84,14 +84,14 @@
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                                 <li><a class="dropdown-item" href="{% url 'profile' %}"><i class="bi bi-person me-2"></i>Profile</a></li>
-                                {% if user.is_instructor and user.instructor_profile.status == 'verified' %}
+                                {% if user.is_instructor and user.get_instructor_status == 'verified' %}
                                 <li><a class="dropdown-item" href="{% url 'instructor_dashboard' %}"><i class="bi bi-chalkboard-teacher me-2"></i>Instructor Dashboard</a></li>
                                 {% endif %}
                                 {% if user.is_superuser %}
                                 <li><a class="dropdown-item" href="{% url 'owner_dashboard' %}"><i class="bi bi-speedometer2 me-2"></i>Platform Dashboard</a></li>
                                 {% endif %}
                                 {% if not user.is_superuser %}
-                                    {% if not user.is_instructor or user.instructor_profile.status != 'verified' %}
+                                    {% if not user.is_instructor or user.get_instructor_status != 'verified' %}
                                     <li><a class="dropdown-item" href="{% url 'student_dashboard' %}"><i class="bi bi-book me-2"></i>My Courses</a></li>
                                     {% endif %}
                                  {% endif %}
