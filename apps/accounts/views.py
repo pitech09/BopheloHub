@@ -5,6 +5,7 @@ from django.urls import reverse_lazy, reverse
 from django.views.generic import CreateView, TemplateView, UpdateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
+from django.db import IntegrityError
 from .forms import StudentRegistrationForm, InstructorRegistrationForm, ProfileEditForm
 from .models import User
 from enrollments.models import Enrollment
@@ -18,7 +19,14 @@ class StudentRegisterView(CreateView):
     success_url = reverse_lazy('login')
 
     def form_valid(self, form):
-        user = form.save()
+        try:
+            user = form.save()
+        except IntegrityError:
+            form.add_error(
+                None,
+                'That account could not be created. Please try a different email or name.'
+            )
+            return self.form_invalid(form)
         login(self.request, user)   # auto-login after registration
         return redirect('profile')
 
@@ -29,7 +37,14 @@ class InstructorRegisterView(CreateView):
     success_url = reverse_lazy('login')
 
     def form_valid(self, form):
-        user = form.save()
+        try:
+            user = form.save()
+        except IntegrityError:
+            form.add_error(
+                None,
+                'That account could not be created. Please try a different email or name.'
+            )
+            return self.form_invalid(form)
         login(self.request, user)
         return redirect('instructor_apply')   # redirect to upload verification
 
@@ -84,9 +99,16 @@ class ProfileView(LoginRequiredMixin, TemplateView):
     def post(self, request, *args, **kwargs):
         form = ProfileEditForm(request.POST, request.FILES, instance=request.user)
         if form.is_valid():
-            form.save()
-            messages.success(request, 'Profile updated successfully.')
-            return redirect('profile')
+            try:
+                form.save()
+            except IntegrityError:
+                form.add_error(
+                    None,
+                    'We could not save those changes. Please try using something different.'
+                )
+            else:
+                messages.success(request, 'Profile updated successfully.')
+                return redirect('profile')
         # Re-render with errors
         context = self.get_context_data()
         context['form'] = form

@@ -17,22 +17,22 @@
     </div>
 
     <!-- Filters -->
-    <div class="d-flex flex-wrap gap-2 mb-4">
-        <a href="{% url 'owner_course_list' %}" class="btn btn-sm rounded-pill {% if not current_status %}btn-primary{% else %}btn-outline-secondary{% endif %}">
-            All <span class="badge bg-light text-dark ms-1">{{ total_courses_count }}</span>
+    <div class="course-filters d-flex flex-nowrap gap-2 mb-4 overflow-auto pb-1">
+        <a href="{% url 'owner_course_list' %}" class="btn btn-sm course-filter-btn rounded-pill text-nowrap {% if not current_status %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+            All <span class="course-count-badge">{{ total_courses_count }}</span>
         </a>
-        <a href="{% url 'owner_course_list' %}?status=published" class="btn btn-sm rounded-pill {% if current_status == 'published' %}btn-success{% else %}btn-outline-secondary{% endif %}">
-            <i class="bi bi-globe me-1"></i>Published <span class="badge bg-light text-dark ms-1">{{ published_count }}</span>
+        <a href="{% url 'owner_course_list' %}?status=published" class="btn btn-sm course-filter-btn rounded-pill text-nowrap {% if current_status == 'published' %}btn-success{% else %}btn-outline-secondary{% endif %}">
+            <i class="bi bi-globe me-1"></i>Published <span class="course-count-badge">{{ published_count }}</span>
         </a>
-        <a href="{% url 'owner_course_list' %}?status=draft" class="btn btn-sm rounded-pill {% if current_status == 'draft' %}btn-secondary{% else %}btn-outline-secondary{% endif %}">
-            <i class="bi bi-pencil me-1"></i>Drafts <span class="badge bg-light text-dark ms-1">{{ draft_count }}</span>
+        <a href="{% url 'owner_course_list' %}?status=draft" class="btn btn-sm course-filter-btn rounded-pill text-nowrap {% if current_status == 'draft' %}btn-secondary{% else %}btn-outline-secondary{% endif %}">
+            <i class="bi bi-pencil me-1"></i>Drafts <span class="course-count-badge">{{ draft_count }}</span>
         </a>
     </div>
 
     <!-- Search -->
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-body">
-            <form method="get" class="d-flex gap-2">
+            <form method="get" class="d-flex gap-2 flex-nowrap">
                 <input type="text" name="q" class="form-control apple-input" placeholder="Search by title or instructor..." value="{{ search_query }}">
                 <select name="category" class="form-select apple-input" style="max-width: 200px;">
                     <option value="">All Categories</option>
@@ -40,7 +40,7 @@
                     <option value="{{ cat.slug }}" {% if current_category == cat.slug %}selected{% endif %}>{{ cat.name }}</option>
                     {% endfor %}
                 </select>
-                <button type="submit" class="btn btn-primary rounded-pill"><i class="bi bi-search"></i></button>
+                <button type="submit" class="btn btn-primary rounded-pill flex-shrink-0"><i class="bi bi-search"></i></button>
                 {% if current_status %}
                 <input type="hidden" name="status" value="{{ current_status }}">
                 {% endif %}
@@ -147,4 +147,62 @@
         </div>
     </div>
 </div>
+<style>
+    .course-filters {
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+    }
+
+    .course-filters .btn {
+        flex: 0 0 auto;
+    }
+
+    .course-filter-btn {
+        min-height: 32px;
+        padding: 0.35rem 0.8rem;
+        font-size: 0.8rem;
+        letter-spacing: 0;
+        line-height: 1.1;
+    }
+
+    .course-count-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 1.6rem;
+        height: 1.35rem;
+        margin-left: 0.45rem;
+        padding: 0 0.45rem;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.92);
+        color: var(--text-primary);
+        font-size: 0.72rem;
+        font-weight: 700;
+        line-height: 1;
+    }
+
+    .btn-primary .course-count-badge,
+    .btn-success .course-count-badge,
+    .btn-secondary .course-count-badge {
+        background: rgba(255, 255, 255, 0.22);
+        color: #fff;
+    }
+
+    .course-filters::-webkit-scrollbar {
+        height: 8px;
+    }
+
+    .course-filters::-webkit-scrollbar-thumb {
+        background: rgba(0, 0, 0, 0.16);
+        border-radius: 999px;
+    }
+
+    @media (max-width: 992px) {
+        .course-filters {
+            flex-wrap: nowrap !important;
+            overflow-x: auto;
+            overflow-y: hidden;
+        }
+    }
+</style>
 {% endblock %}

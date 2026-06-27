@@ -16,27 +16,27 @@
     </div>
 
     <!-- Role Filters -->
-    <div class="d-flex flex-wrap gap-2 mb-4">
-        <a href="{% url 'owner_user_list' %}" class="btn btn-sm rounded-pill {% if not current_role %}btn-primary{% else %}btn-outline-secondary{% endif %}">
-            All <span class="badge bg-light text-dark ms-1">{{ total_users_count }}</span>
+    <div class="user-filters d-flex flex-nowrap gap-2 mb-4 overflow-auto pb-1">
+        <a href="{% url 'owner_user_list' %}" class="btn btn-sm user-filter-btn rounded-pill text-nowrap {% if not current_role %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+            All <span class="user-count-badge">{{ total_users_count }}</span>
         </a>
-        <a href="{% url 'owner_user_list' %}?role=student" class="btn btn-sm rounded-pill {% if current_role == 'student' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
-            <i class="bi bi-person me-1"></i>Students <span class="badge bg-light text-dark ms-1">{{ student_count }}</span>
+        <a href="{% url 'owner_user_list' %}?role=student" class="btn btn-sm user-filter-btn rounded-pill text-nowrap {% if current_role == 'student' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+            <i class="bi bi-person me-1"></i>Students <span class="user-count-badge">{{ student_count }}</span>
         </a>
-        <a href="{% url 'owner_user_list' %}?role=instructor" class="btn btn-sm rounded-pill {% if current_role == 'instructor' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
-            <i class="bi bi-person-badge me-1"></i>Instructors <span class="badge bg-light text-dark ms-1">{{ instructor_count }}</span>
+        <a href="{% url 'owner_user_list' %}?role=instructor" class="btn btn-sm user-filter-btn rounded-pill text-nowrap {% if current_role == 'instructor' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+            <i class="bi bi-person-badge me-1"></i>Instructors <span class="user-count-badge">{{ instructor_count }}</span>
         </a>
-        <a href="{% url 'owner_user_list' %}?role=admin" class="btn btn-sm rounded-pill {% if current_role == 'admin' %}btn-danger{% else %}btn-outline-secondary{% endif %}">
-            <i class="bi bi-shield me-1"></i>Admins <span class="badge bg-light text-dark ms-1">{{ admin_count }}</span>
+        <a href="{% url 'owner_user_list' %}?role=admin" class="btn btn-sm user-filter-btn rounded-pill text-nowrap {% if current_role == 'admin' %}btn-danger{% else %}btn-outline-secondary{% endif %}">
+            <i class="bi bi-shield me-1"></i>Admins <span class="user-count-badge">{{ admin_count }}</span>
         </a>
     </div>
 
     <!-- Search -->
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-body">
-            <form method="get" class="d-flex gap-2">
+            <form method="get" class="d-flex gap-2 flex-nowrap">
                 <input type="text" name="q" class="form-control apple-input" placeholder="Search by name or email..." value="{{ search_query }}">
-                <button type="submit" class="btn btn-primary rounded-pill"><i class="bi bi-search"></i></button>
+                <button type="submit" class="btn btn-primary rounded-pill flex-shrink-0"><i class="bi bi-search"></i></button>
                 {% if current_role %}
                 <input type="hidden" name="role" value="{{ current_role }}">
                 {% endif %}
@@ -142,4 +142,61 @@
         </div>
     </div>
 </div>
+<style>
+    .user-filters {
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+    }
+
+    .user-filters .btn {
+        flex: 0 0 auto;
+    }
+
+    .user-filter-btn {
+        min-height: 32px;
+        padding: 0.35rem 0.8rem;
+        font-size: 0.8rem;
+        letter-spacing: 0;
+        line-height: 1.1;
+    }
+
+    .user-count-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 1.6rem;
+        height: 1.35rem;
+        margin-left: 0.45rem;
+        padding: 0 0.45rem;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.92);
+        color: var(--text-primary);
+        font-size: 0.72rem;
+        font-weight: 700;
+        line-height: 1;
+    }
+
+    .btn-primary .user-count-badge,
+    .btn-danger .user-count-badge {
+        background: rgba(255, 255, 255, 0.22);
+        color: #fff;
+    }
+
+    .user-filters::-webkit-scrollbar {
+        height: 8px;
+    }
+
+    .user-filters::-webkit-scrollbar-thumb {
+        background: rgba(0, 0, 0, 0.16);
+        border-radius: 999px;
+    }
+
+    @media (max-width: 992px) {
+        .user-filters {
+            flex-wrap: nowrap !important;
+            overflow-x: auto;
+            overflow-y: hidden;
+        }
+    }
+</style>
 {% endblock %}

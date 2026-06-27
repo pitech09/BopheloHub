@@ -17,27 +17,27 @@
     </div>
 
     <!-- Status Filters -->
-    <div class="d-flex flex-wrap gap-2 mb-4">
-        <a href="{% url 'owner_enrollment_list' %}" class="btn btn-sm rounded-pill {% if not current_status %}btn-primary{% else %}btn-outline-secondary{% endif %}">
-            All <span class="badge bg-light text-dark ms-1">{{ total_count }}</span>
+    <div class="enrollment-filters d-flex flex-nowrap gap-2 mb-4 overflow-auto pb-1">
+        <a href="{% url 'owner_enrollment_list' %}" class="btn btn-sm enrollment-filter-btn rounded-pill text-nowrap {% if not current_status %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+            All <span class="enrollment-count-badge">{{ total_count }}</span>
         </a>
-        <a href="{% url 'owner_enrollment_list' %}?status=active" class="btn btn-sm rounded-pill {% if current_status == 'active' %}btn-success{% else %}btn-outline-secondary{% endif %}">
-            <i class="bi bi-check-circle me-1"></i>Active <span class="badge bg-light text-dark ms-1">{{ active_count }}</span>
+        <a href="{% url 'owner_enrollment_list' %}?status=active" class="btn btn-sm enrollment-filter-btn rounded-pill text-nowrap {% if current_status == 'active' %}btn-success{% else %}btn-outline-secondary{% endif %}">
+            <i class="bi bi-check-circle me-1"></i>Active <span class="enrollment-count-badge">{{ active_count }}</span>
         </a>
-        <a href="{% url 'owner_enrollment_list' %}?status=pending" class="btn btn-sm rounded-pill {% if current_status == 'pending' %}btn-warning{% else %}btn-outline-secondary{% endif %}">
-            <i class="bi bi-clock me-1"></i>Pending <span class="badge bg-light text-dark ms-1">{{ pending_count }}</span>
+        <a href="{% url 'owner_enrollment_list' %}?status=pending" class="btn btn-sm enrollment-filter-btn rounded-pill text-nowrap {% if current_status == 'pending' %}btn-warning{% else %}btn-outline-secondary{% endif %}">
+            <i class="bi bi-clock me-1"></i>Pending <span class="enrollment-count-badge">{{ pending_count }}</span>
         </a>
-        <a href="{% url 'owner_enrollment_list' %}?status=rejected" class="btn btn-sm rounded-pill {% if current_status == 'rejected' %}btn-danger{% else %}btn-outline-secondary{% endif %}">
-            <i class="bi bi-x-circle me-1"></i>Rejected <span class="badge bg-light text-dark ms-1">{{ rejected_count }}</span>
+        <a href="{% url 'owner_enrollment_list' %}?status=rejected" class="btn btn-sm enrollment-filter-btn rounded-pill text-nowrap {% if current_status == 'rejected' %}btn-danger{% else %}btn-outline-secondary{% endif %}">
+            <i class="bi bi-x-circle me-1"></i>Rejected <span class="enrollment-count-badge">{{ rejected_count }}</span>
         </a>
     </div>
 
     <!-- Search -->
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-body">
-            <form method="get" class="d-flex gap-2">
+            <form method="get" class="d-flex gap-2 flex-nowrap">
                 <input type="text" name="q" class="form-control apple-input" placeholder="Search by user email or course title..." value="{{ search_query }}">
-                <button type="submit" class="btn btn-primary rounded-pill"><i class="bi bi-search"></i></button>
+                <button type="submit" class="btn btn-primary rounded-pill flex-shrink-0"><i class="bi bi-search"></i></button>
                 {% if current_status %}
                 <input type="hidden" name="status" value="{{ current_status }}">
                 {% endif %}
@@ -142,4 +142,63 @@
         </div>
     </div>
 </div>
+<style>
+    .enrollment-filters {
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+    }
+
+    .enrollment-filters .btn {
+        flex: 0 0 auto;
+    }
+
+    .enrollment-filter-btn {
+        min-height: 32px;
+        padding: 0.35rem 0.8rem;
+        font-size: 0.8rem;
+        letter-spacing: 0;
+        line-height: 1.1;
+    }
+
+    .enrollment-count-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 1.6rem;
+        height: 1.35rem;
+        margin-left: 0.45rem;
+        padding: 0 0.45rem;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.92);
+        color: var(--text-primary);
+        font-size: 0.72rem;
+        font-weight: 700;
+        line-height: 1;
+    }
+
+    .btn-primary .enrollment-count-badge,
+    .btn-success .enrollment-count-badge,
+    .btn-warning .enrollment-count-badge,
+    .btn-danger .enrollment-count-badge {
+        background: rgba(255, 255, 255, 0.22);
+        color: #fff;
+    }
+
+    .enrollment-filters::-webkit-scrollbar {
+        height: 8px;
+    }
+
+    .enrollment-filters::-webkit-scrollbar-thumb {
+        background: rgba(0, 0, 0, 0.16);
+        border-radius: 999px;
+    }
+
+    @media (max-width: 992px) {
+        .enrollment-filters {
+            flex-wrap: nowrap !important;
+            overflow-x: auto;
+            overflow-y: hidden;
+        }
+    }
+</style>
 {% endblock %}
