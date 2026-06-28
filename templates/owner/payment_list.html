@@ -84,7 +84,7 @@
                                 {% endif %}
                             </td>
                             <td>
-                                <span class="badge {% if payment.status == 'verified' %}bg-success{% elif payment.status == 'pending' %}bg-warning text-dark{% else %}bg-danger{% endif %}">
+                                <span class="badge {% if payment.status == 'verified' %}admin-badge-success{% elif payment.status == 'pending' %}admin-badge-warning{% else %}admin-badge-danger{% endif %}">
                                     {{ payment.get_status_display }}
                                 </span>
                                 {% if payment.verified_by %}
@@ -190,8 +190,9 @@
         margin-left: 0.45rem;
         padding: 0 0.45rem;
         border-radius: 999px;
-        background: rgba(255, 255, 255, 0.92);
+        background: var(--bg-body);
         color: var(--text-primary);
+        border: 1px solid var(--border-subtle);
         font-size: 0.72rem;
         font-weight: 700;
         line-height: 1;
@@ -201,8 +202,8 @@
     .btn-success .payment-count-badge,
     .btn-warning .payment-count-badge,
     .btn-danger .payment-count-badge {
-        background: rgba(255, 255, 255, 0.22);
-        color: #fff;
+        background: var(--bg-body);
+        color: var(--text-primary);
     }
 
     .payment-filters::-webkit-scrollbar {

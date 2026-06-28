@@ -77,21 +77,21 @@
                 <div class="col-md-3">
                     <div class="stat-card">
                         <div class="stat-label">Platform Fee (15%)</div>
-                        <div class="stat-value" style="color: var(--primary);">M{{ platform_fee|floatformat:2|intcomma }}</div>
+                        <div class="stat-value admin-accent-primary">M{{ platform_fee|floatformat:2|intcomma }}</div>
                         <small class="text-secondary">15% of total revenue</small>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="stat-card">
                         <div class="stat-label">Instructor Payouts</div>
-                        <div class="stat-value" style="color: #34c759;">M{{ instructor_payouts|floatformat:2|intcomma }}</div>
+                        <div class="stat-value admin-accent-success">M{{ instructor_payouts|floatformat:2|intcomma }}</div>
                         <small class="text-secondary">85% paid to instructors</small>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="stat-card">
                         <div class="stat-label">Pending Verification</div>
-                        <div class="stat-value" style="color: #ff9f0a;">M{{ pending_revenue|floatformat:2|intcomma }}</div>
+                        <div class="stat-value admin-accent-warning">M{{ pending_revenue|floatformat:2|intcomma }}</div>
                         <small class="text-secondary">{{ pending_payments_count }} payments pending</small>
                     </div>
                 </div>
@@ -105,15 +105,15 @@
                             <h5 class="fw-bold mb-3"><i class="bi bi-graph-up-arrow me-2"></i>Growth This Month</h5>
                             <div class="row g-3">
                                 <div class="col-6">
-                                    <div class="text-center p-3 bg-light rounded-3">
-                                        <div class="h4 fw-bold mb-1" style="color: var(--primary);">+{{ new_users_this_month }}</div>
+                                    <div class="text-center p-3 admin-surface rounded-3">
+                                        <div class="h4 fw-bold mb-1 admin-accent-primary">+{{ new_users_this_month }}</div>
                                         <small class="text-secondary">New Users</small>
                                         <span class="badge bg-success ms-1">{{ user_growth_pct }}%</span>
                                     </div>
                                 </div>
                                 <div class="col-6">
-                                    <div class="text-center p-3 bg-light rounded-3">
-                                        <div class="h4 fw-bold mb-1" style="color: var(--primary);">+{{ new_courses_this_month }}</div>
+                                    <div class="text-center p-3 admin-surface rounded-3">
+                                        <div class="h4 fw-bold mb-1 admin-accent-primary">+{{ new_courses_this_month }}</div>
                                         <small class="text-secondary">New Courses</small>
                                         <span class="badge bg-success ms-1">{{ course_growth_pct }}%</span>
                                     </div>
@@ -129,7 +129,7 @@
                             {% if category_revenue %}
                             <div class="d-flex flex-wrap gap-2">
                                 {% for cat in category_revenue %}
-                                <span class="badge bg-light text-dark border px-3 py-2">
+                                <span class="badge admin-soft-badge px-3 py-2">
                                     {{ cat.name }}: <strong>M{{ cat.revenue|floatformat:0|intcomma }}</strong>
                                 </span>
                                 {% endfor %}
@@ -165,7 +165,7 @@
                                             <td class="fw-semibold">{{ month.label }}</td>
                                             <td class="text-end">{{ month.count }}</td>
                                             <td class="text-end fw-semibold">M{{ month.revenue|floatformat:2|intcomma }}</td>
-                                            <td class="text-end" style="color: var(--primary);">M{{ month.fee|floatformat:2|intcomma }}</td>
+                                            <td class="text-end admin-accent-primary">M{{ month.fee|floatformat:2|intcomma }}</td>
                                         </tr>
                                         {% endfor %}
                                     </tbody>
@@ -422,7 +422,7 @@
                                         <div class="list-group-item px-0 py-2 border-bottom">
                                             <div class="small fw-semibold">{{ r.course.title|truncatechars:40 }}</div>
                                             <div class="d-flex align-items-center gap-2">
-                                                <span class="small" style="color: #ff9f0a;">
+                                <span class="small admin-rating">
                                                     {% for i in "12345" %}
                                                         {% if forloop.counter <= r.rating %}
                                                         <i class="bi bi-star-fill"></i>
@@ -463,7 +463,7 @@
                                         <div>
                                             <div class="small fw-semibold">{{ c.title|truncatechars:45 }}</div>
                                             <div class="small text-secondary">
-                                                <span style="color: #ff9f0a;">
+                                <span class="admin-rating">
                                                     {% for i in "12345" %}
                                                         {% if forloop.counter <= c.avg_rating|floatformat:"0" %}
                                                         <i class="bi bi-star-fill"></i>
@@ -525,20 +525,20 @@
                     <div class="row g-3 mb-3">
                         <div class="col-md-3 col-6">
                             <div class="text-center p-3 bg-warning bg-opacity-10 rounded-3">
-                                <div class="h4 fw-bold mb-1" style="color: #ff9f0a;">{{ pending_payments_count }}</div>
-                                <small class="text-secondary">Pending</small>
+                                <div class="h4 fw-bold mb-1 admin-accent-warning">{{ pending_payments_count }}</div>
+                                <small class="">Pending</small>
                             </div>
                         </div>
                         <div class="col-md-3 col-6">
                             <div class="text-center p-3 bg-success bg-opacity-10 rounded-3">
-                                <div class="h4 fw-bold mb-1" style="color: #34c759;">{{ total_payments }}</div>
-                                <small class="text-secondary">Verified</small>
+                                <div class="h4 fw-bold mb-1 admin-accent-success">{{ total_payments }}</div>
+                                <small class="">Verified</small>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="text-center p-3 bg-primary bg-opacity-10 rounded-3">
-                                <div class="h4 fw-bold mb-1" style="color: var(--primary);">M{{ total_revenue|floatformat:2|intcomma }}</div>
-                                <small class="text-secondary">Total Verified Revenue</small>
+                                <div class="h4 fw-bold mb-1 admin-accent-primary">M{{ total_revenue|floatformat:2|intcomma }}</div>
+                                <small class="">Total Verified Revenue</small>
                             </div>
                         </div>
                     </div>
@@ -592,20 +592,20 @@
                     </div>
                     <div class="row g-3 mb-3">
                         <div class="col-md-4 col-6">
-                            <div class="text-center p-3 bg-light rounded-3">
-                                <div class="h4 fw-bold mb-1" style="color: var(--primary);">{{ total_users }}</div>
+                            <div class="text-center p-3 admin-surface rounded-3">
+                                <div class="h4 fw-bold mb-1 admin-accent-primary">{{ total_users }}</div>
                                 <small class="text-secondary">Total Users</small>
                             </div>
                         </div>
                         <div class="col-md-4 col-6">
-                            <div class="text-center p-3 bg-light rounded-3">
-                                <div class="h4 fw-bold mb-1" style="color: var(--primary);">{{ total_students }}</div>
+                            <div class="text-center p-3 admin-surface rounded-3">
+                                <div class="h4 fw-bold mb-1 admin-accent-primary">{{ total_students }}</div>
                                 <small class="text-secondary">Students</small>
                             </div>
                         </div>
                         <div class="col-md-4 col-6">
-                            <div class="text-center p-3 bg-light rounded-3">
-                                <div class="h4 fw-bold mb-1" style="color: var(--primary);">{{ total_instructors }}</div>
+                            <div class="text-center p-3 admin-surface rounded-3">
+                                <div class="h4 fw-bold mb-1 admin-accent-primary">{{ total_instructors }}</div>
                                 <small class="text-secondary">Verified Instructors</small>
                             </div>
                         </div>
@@ -666,14 +666,14 @@
                     </div>
                     <div class="row g-3 mb-3">
                         <div class="col-md-3 col-6">
-                            <div class="text-center p-3 bg-light rounded-3">
-                                <div class="h4 fw-bold mb-1" style="color: var(--primary);">{{ total_courses }}</div>
+                            <div class="text-center p-3 admin-surface rounded-3">
+                                <div class="h4 fw-bold mb-1 admin-accent-primary">{{ total_courses }}</div>
                                 <small class="text-secondary">Total Courses</small>
                             </div>
                         </div>
                         <div class="col-md-3 col-6">
                             <div class="text-center p-3 bg-success bg-opacity-10 rounded-3">
-                                <div class="h4 fw-bold mb-1" style="color: #34c759;">{{ published_courses }}</div>
+                                <div class="h4 fw-bold mb-1 admin-accent-success">{{ published_courses }}</div>
                                 <small class="text-secondary">Published</small>
                             </div>
                         </div>
@@ -684,8 +684,8 @@
                             </div>
                         </div>
                         <div class="col-md-3 col-6">
-                            <div class="text-center p-3 bg-light rounded-3">
-                                <div class="h4 fw-bold mb-1" style="color: var(--primary);">{{ total_categories }}</div>
+                            <div class="text-center p-3 admin-surface rounded-3">
+                                <div class="h4 fw-bold mb-1 admin-accent-primary">{{ total_categories }}</div>
                                 <small class="text-secondary">Categories</small>
                             </div>
                         </div>
@@ -740,20 +740,20 @@
                     </div>
                     <div class="row g-3 mb-3">
                         <div class="col-md-4 col-6">
-                            <div class="text-center p-3 bg-light rounded-3">
-                                <div class="h4 fw-bold mb-1" style="color: var(--primary);">{{ total_enrollments }}</div>
+                            <div class="text-center p-3 admin-surface rounded-3">
+                                <div class="h4 fw-bold mb-1 admin-accent-primary">{{ total_enrollments }}</div>
                                 <small class="text-secondary">Total</small>
                             </div>
                         </div>
                         <div class="col-md-4 col-6">
                             <div class="text-center p-3 bg-success bg-opacity-10 rounded-3">
-                                <div class="h4 fw-bold mb-1" style="color: #34c759;">{{ active_enrollments }}</div>
+                                <div class="h4 fw-bold mb-1 admin-accent-success">{{ active_enrollments }}</div>
                                 <small class="text-secondary">Active</small>
                             </div>
                         </div>
                         <div class="col-md-4 col-6">
                             <div class="text-center p-3 bg-warning bg-opacity-10 rounded-3">
-                                <div class="h4 fw-bold mb-1" style="color: #ff9f0a;">{{ pending_enrollments }}</div>
+                                <div class="h4 fw-bold mb-1 admin-accent-warning">{{ pending_enrollments }}</div>
                                 <small class="text-secondary">Pending</small>
                             </div>
                         </div>
@@ -813,19 +813,19 @@
                     </div>
                     <div class="row g-3 mb-3">
                         <div class="col-md-4 col-6">
-                            <div class="text-center p-3 bg-light rounded-3">
-                                <div class="h4 fw-bold mb-1" style="color: var(--primary);">{{ total_instructors }}</div>
+                            <div class="text-center p-3 admin-surface rounded-3">
+                                <div class="h4 fw-bold mb-1 admin-accent-primary">{{ total_instructors }}</div>
                                 <small class="text-secondary">Verified</small>
                             </div>
                         </div>
                         <div class="col-md-4 col-6">
                             <div class="text-center p-3 bg-warning bg-opacity-10 rounded-3">
-                                <div class="h4 fw-bold mb-1" style="color: #ff9f0a;">{{ pending_instructor_count }}</div>
+                                <div class="h4 fw-bold mb-1 admin-accent-warning">{{ pending_instructor_count }}</div>
                                 <small class="text-secondary">Pending Approval</small>
                             </div>
                         </div>
                         <div class="col-md-4 col-6">
-                            <div class="text-center p-3 bg-light rounded-3">
+                            <div class="text-center p-3 admin-surface rounded-3">
                                 <div class="h4 fw-bold mb-1">{{ total_courses }}</div>
                                 <small class="text-secondary">Courses by Instructors</small>
                             </div>

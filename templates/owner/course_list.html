@@ -6,12 +6,12 @@
 
 {% block content %}
 <div class="container">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
+    <div class="course-page-header d-flex justify-content-between align-items-center mb-4">
+        <div class="course-page-title">
             <h1 class="fw-bold mb-1"><i class="bi bi-book me-2"></i>Course Management</h1>
             <p class="text-secondary mb-0">View, search, and manage all courses on the platform</p>
         </div>
-        <a href="{% url 'owner_dashboard' %}" class="btn btn-outline-primary">
+        <a href="{% url 'owner_dashboard' %}" class="btn btn-outline-primary course-dashboard-btn">
             <i class="bi bi-arrow-left me-1"></i>Dashboard
         </a>
     </div>
@@ -30,11 +30,11 @@
     </div>
 
     <!-- Search -->
-    <div class="card border-0 shadow-sm mb-4">
+    <div class="card border-0 shadow-sm mb-4 course-search-card">
         <div class="card-body">
-            <form method="get" class="d-flex gap-2 flex-nowrap">
-                <input type="text" name="q" class="form-control apple-input" placeholder="Search by title or instructor..." value="{{ search_query }}">
-                <select name="category" class="form-select apple-input" style="max-width: 200px;">
+            <form method="get" class="course-search-form d-flex gap-2 flex-nowrap">
+                <input type="text" name="q" class="form-control apple-input course-search-input" placeholder="Search by title or instructor..." value="{{ search_query }}">
+                <select name="category" class="form-select apple-input course-category-select">
                     <option value="">All Categories</option>
                     {% for cat in categories %}
                     <option value="{{ cat.slug }}" {% if current_category == cat.slug %}selected{% endif %}>{{ cat.name }}</option>
@@ -53,31 +53,31 @@
         <div class="card-body p-0">
             {% if courses %}
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
+                <table class="table table-hover align-middle mb-0 course-table">
                     <thead class="table-light">
                         <tr>
-                            <th>Title</th>
-                            <th>Instructor</th>
-                            <th>Category</th>
-                            <th class="text-end">Price</th>
-                            <th class="text-end">Enrolled</th>
-                            <th>Rating</th>
-                            <th>Status</th>
-                            <th>Created</th>
-                            <th class="text-end">Actions</th>
+                            <th class="text-nowrap">Title</th>
+                            <th class="text-nowrap">Instructor</th>
+                            <th class="text-nowrap">Category</th>
+                            <th class="text-end text-nowrap">Price</th>
+                            <th class="text-end text-nowrap">Enrolled</th>
+                            <th class="text-nowrap">Rating</th>
+                            <th class="text-nowrap">Status</th>
+                            <th class="text-nowrap">Created</th>
+                            <th class="text-end text-nowrap">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for course in courses %}
                         <tr>
-                            <td class="fw-semibold small">{{ course.title|truncatechars:45 }}</td>
-                            <td class="small">{{ course.instructor.get_full_name|default:course.instructor.username }}</td>
-                            <td><span class="badge bg-light text-dark">{{ course.category.name|default:"—" }}</span></td>
-                            <td class="text-end">M{{ course.price|floatformat:2 }}</td>
-                            <td class="text-end">{{ course.enrolled_count }}</td>
-                            <td>
+                            <td class="fw-semibold small text-nowrap course-title-cell">{{ course.title|truncatechars:45 }}</td>
+                            <td class="small text-nowrap course-instructor-cell">{{ course.instructor.get_full_name|default:course.instructor.username }}</td>
+                            <td class="text-nowrap course-category-cell"><span class="badge course-category-badge">{{ course.category.name|default:"—" }}</span></td>
+                            <td class="text-end text-nowrap">M{{ course.price|floatformat:2 }}</td>
+                            <td class="text-end text-nowrap">{{ course.enrolled_count }}</td>
+                            <td class="text-nowrap">
                                 {% if course.review_count > 0 %}
-                                <span style="color: #ff9f0a;">
+                                <span class="course-rating-stars">
                                     {% for i in "12345" %}
                                         {% if forloop.counter <= course.avg_rating|floatformat:"0" %}
                                         <i class="bi bi-star-fill"></i>
@@ -91,13 +91,13 @@
                                 <span class="text-secondary small">—</span>
                                 {% endif %}
                             </td>
-                            <td>
+                            <td class="text-nowrap">
                                 <span class="badge {% if course.is_published %}bg-success{% else %}bg-secondary{% endif %}">
                                     {{ course.is_published|yesno:"Published,Draft" }}
                                 </span>
                             </td>
-                            <td class="small text-secondary">{{ course.created_at|date:"M d, Y" }}</td>
-                            <td class="text-end">
+                            <td class="small text-secondary text-nowrap">{{ course.created_at|date:"M d, Y" }}</td>
+                            <td class="text-end text-nowrap">
                                 <div class="d-flex gap-1 justify-content-end">
                                     <a href="{% url 'course_detail' course.slug %}" class="btn btn-sm btn-outline-primary rounded-pill" title="View">
                                         <i class="bi bi-eye"></i>
@@ -174,7 +174,7 @@
         margin-left: 0.45rem;
         padding: 0 0.45rem;
         border-radius: 999px;
-        background: rgba(255, 255, 255, 0.92);
+        background: var(--bg-section);
         color: var(--text-primary);
         font-size: 0.72rem;
         font-weight: 700;
@@ -197,11 +197,113 @@
         border-radius: 999px;
     }
 
+    .course-table {
+        min-width: 1120px;
+    }
+
+    .course-title-cell {
+        max-width: 320px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .course-instructor-cell {
+        max-width: 220px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .course-category-cell {
+        max-width: 180px;
+    }
+
+    .course-category-badge {
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        background: var(--bg-section);
+        color: var(--text-primary);
+    }
+
+    .course-rating-stars {
+        color: var(--primary);
+    }
+
     @media (max-width: 992px) {
+        .course-page-header {
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-items: flex-start !important;
+        }
+
+        .course-page-title h1 {
+            white-space: normal;
+        }
+
         .course-filters {
             flex-wrap: nowrap !important;
             overflow-x: auto;
             overflow-y: hidden;
+        }
+
+        .course-search-form {
+            flex-wrap: wrap !important;
+        }
+
+        .course-search-input,
+        .course-category-select,
+        .course-search-form .btn {
+            width: 100%;
+            max-width: none !important;
+        }
+
+        .course-search-form .btn {
+            min-height: 42px;
+        }
+
+        .course-table {
+            min-width: 900px;
+        }
+
+        .course-title-cell {
+            max-width: 240px;
+        }
+
+        .course-instructor-cell {
+            max-width: 160px;
+        }
+
+        .course-category-cell {
+            max-width: 140px;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .course-filter-btn {
+            padding: 0.3rem 0.7rem;
+            font-size: 0.75rem;
+        }
+
+        .course-count-badge {
+            min-width: 1.45rem;
+            height: 1.25rem;
+            font-size: 0.68rem;
+        }
+
+        .course-table {
+            min-width: 860px;
+        }
+
+        .course-title-cell {
+            max-width: 200px;
+        }
+
+        .course-instructor-cell {
+            max-width: 140px;
+        }
+
+        .course-category-cell {
+            max-width: 120px;
         }
     }
 </style>
