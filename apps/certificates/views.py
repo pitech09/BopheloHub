@@ -1,7 +1,11 @@
 from io import BytesIO
+from pathlib import Path
+
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
+from django.contrib.staticfiles import finders
+from django.conf import settings
 from certificates.models import Certificate
 
 
@@ -112,14 +116,18 @@ def certificate_download(request, pk):
     elements.append(Spacer(1, 0.3*inch))
     
     # Logo at top center
-    logo_path = 'static/images/logo.png'  # Update with your actual logo path
-    try:
-        logo = Image(logo_path, width=1.5*inch, height=1.5*inch)
-        logo.hAlign = 'CENTER'
-        elements.append(logo)
-    except Exception as e:
-        # If logo fails to load, just skip it
-        pass
+    logo_path = finders.find('img/bh-elearning-logo.png')
+    if not logo_path:
+        logo_path = Path(settings.BASE_DIR) / 'static' / 'img' / 'bh-elearning-logo.png'
+
+    if logo_path and Path(logo_path).exists():
+        try:
+            logo = Image(str(logo_path), width=1.5*inch, height=1.5*inch)
+            logo.hAlign = 'CENTER'
+            elements.append(logo)
+        except Exception:
+            # If the logo cannot be rendered, continue without it.
+            pass
     elements.append(Spacer(1, 0.3*inch))
     
     # Decorative line
