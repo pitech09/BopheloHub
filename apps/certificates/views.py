@@ -27,94 +27,111 @@ def certificate_detail(request, pk):
 def certificate_download(request, pk):
     """Download a certificate as a PDF file."""
     certificate = get_object_or_404(Certificate, pk=pk, enrollment__user=request.user)
-    
+
     # Get certificate data
     user_name = certificate.enrollment.user.get_full_name() or certificate.enrollment.user.username
     course_title = certificate.enrollment.course.title
-    instructor_name = certificate.enrollment.course.instructor.get_full_name() or certificate.enrollment.course.instructor.username
     issued_date = certificate.issued_at.strftime('%B %d, %Y')
-    
+
     # Create a BytesIO buffer for the PDF
     buffer = BytesIO()
-    
+
     # Create the PDF
     from reportlab.lib.pagesizes import letter, landscape
     from reportlab.lib import colors
     from reportlab.lib.units import inch
-    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, Table, TableStyle
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     from reportlab.lib.enums import TA_CENTER
-    from reportlab.lib.colors import Color
-    from reportlab.graphics.shapes import Drawing, Rect, String, Group
-    from reportlab.graphics import renderPDF
-    
+
     # Set up the document
-    doc = SimpleDocTemplate(buffer, pagesize=landscape(letter), 
-                           rightMargin=0.5*inch, leftMargin=0.5*inch, 
-                           topMargin=0.5*inch, bottomMargin=0.5*inch)
-    
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=landscape(letter),
+        rightMargin=0.55 * inch,
+        leftMargin=0.55 * inch,
+        topMargin=0.5 * inch,
+        bottomMargin=0.5 * inch,
+    )
+
     # Container for the 'Flowable' objects
     elements = []
-    
+
     # Define styles
     styles = getSampleStyleSheet()
-    
+
     # Custom styles
+    title_accent = colors.HexColor('#0071e3')
+    text_primary = colors.HexColor('#1d1d1f')
+    text_secondary = colors.HexColor('#6e6e73')
+
     title_style = ParagraphStyle(
         'CustomTitle',
         parent=styles['Heading1'],
-        fontSize=36,
-        textColor=colors.HexColor('#1a1a2e'),
+        fontSize=26,
+        leading=30,
+        textColor=text_primary,
         alignment=TA_CENTER,
-        spaceAfter=30,
+        spaceAfter=12,
         fontName='Helvetica-Bold'
     )
-    
+
     subtitle_style = ParagraphStyle(
         'Subtitle',
         parent=styles['Normal'],
-        fontSize=16,
-        textColor=colors.HexColor('#666666'),
+        fontSize=12,
+        leading=15,
+        textColor=text_secondary,
         alignment=TA_CENTER,
-        spaceAfter=20,
-        spaceBefore=10
+        spaceAfter=8,
     )
-    
+
     name_style = ParagraphStyle(
         'StudentName',
         parent=styles['Heading2'],
-        fontSize=28,
-        textColor=colors.HexColor('#16213e'),
+        fontSize=24,
+        leading=28,
+        textColor=title_accent,
         alignment=TA_CENTER,
-        spaceAfter=20,
-        spaceBefore=20,
+        spaceAfter=10,
+        spaceBefore=8,
         fontName='Helvetica-Bold'
     )
-    
+
     course_style = ParagraphStyle(
         'CourseTitle',
         parent=styles['Heading2'],
-        fontSize=22,
-        textColor=colors.HexColor('#0f3460'),
+        fontSize=18,
+        leading=22,
+        textColor=text_primary,
         alignment=TA_CENTER,
-        spaceAfter=20,
-        spaceBefore=10,
+        spaceAfter=10,
+        spaceBefore=4,
         fontName='Helvetica-Bold'
     )
-    
+
     details_style = ParagraphStyle(
         'Details',
         parent=styles['Normal'],
-        fontSize=12,
-        textColor=colors.HexColor('#666666'),
+        fontSize=10,
+        leading=12,
+        textColor=text_secondary,
         alignment=TA_CENTER,
-        spaceAfter=10
+        spaceAfter=0,
     )
-    
-    
+
+    meta_style = ParagraphStyle(
+        'Meta',
+        parent=styles['Normal'],
+        fontSize=10,
+        leading=12,
+        textColor=text_secondary,
+        alignment=TA_CENTER,
+    )
+
     # Add content
-    elements.append(Spacer(1, 0.3*inch))
-    
+    elements.append(Spacer(1, 0.15 * inch))
+
     # Logo at top center
     logo_path = finders.find('img/bh-elearning-logo.png')
     if not logo_path:
@@ -122,105 +139,62 @@ def certificate_download(request, pk):
 
     if logo_path and Path(logo_path).exists():
         try:
-            logo = Image(str(logo_path), width=1.5*inch, height=1.5*inch)
+            logo = Image(str(logo_path), width=1.0 * inch, height=1.0 * inch)
             logo.hAlign = 'CENTER'
             elements.append(logo)
         except Exception:
             # If the logo cannot be rendered, continue without it.
             pass
-    elements.append(Spacer(1, 0.3*inch))
-    
-    # Decorative line
-    from reportlab.platypus import Flowable
-    class Line(Flowable):
-        def __init__(self, width, color=colors.HexColor('#e94560')):
-            Flowable.__init__(self)
-            self.width = width
-            self.color = color
-        
-        def draw(self):
-            canvas = self.canv
-            canvas.setStrokeColor(self.color)
-            canvas.setFillColor(self.color)
-            canvas.setLineWidth(2)
-            canvas.line(0, 0, self.width, 0)
-    
-    elements.append(Line(6*inch, colors.HexColor('#e94560')))
-    elements.append(Spacer(1, 0.2*inch))
-    
-    # Title
+
+    elements.append(Spacer(1, 0.16 * inch))
     elements.append(Paragraph("CERTIFICATE OF COMPLETION", title_style))
-    elements.append(Spacer(1, 0.2*inch))
-    
-    # Subtitle
-    elements.append(Paragraph("This is to certify that", subtitle_style))
-    
-    # Student name
+    elements.append(Spacer(1, 0.1 * inch))
+    elements.append(Paragraph("This certifies that", subtitle_style))
     elements.append(Paragraph(user_name, name_style))
-    
-    # Completion text
-    elements.append(Paragraph("has successfully completed the course", subtitle_style))
-    
-    # Course title
+    elements.append(Paragraph("has successfully completed", subtitle_style))
     elements.append(Paragraph(course_title, course_style))
-    
-    # Instructor
-    elements.append(Paragraph(f"Instructor: {instructor_name}", details_style))
-    
-    # Certificate code and date
-    elements.append(Paragraph(f"Certificate Code: {certificate.certificate_code}", details_style))
-    elements.append(Paragraph(f"Issued: {issued_date}", details_style))
-    
-    elements.append(Spacer(1, 0.5*inch))
-    
-    # Signature section
-    sig_style = ParagraphStyle(
-        'Signature',
-        parent=styles['Normal'],
-        fontSize=10,
-        textColor=colors.HexColor('#666666'),
-        alignment=TA_CENTER,
-        spaceBefore=5
+    elements.append(Spacer(1, 0.08 * inch))
+
+    meta_table = Table(
+        [
+            [Paragraph(f"Certificate Code: <b>{certificate.certificate_code}</b>", meta_style)],
+            [Paragraph(f"Issued: <b>{issued_date}</b>", meta_style)],
+        ],
+        colWidths=[6.6 * inch],
     )
-    
-    # Create signature line
-    from reportlab.platypus import Table, TableStyle
-    sig_data = [
-        ['_________________________', '_________________________'],
-        ['Platform Director', 'Date'],
-        ['BopheloHub', issued_date],
-    ]
-    sig_table = Table(sig_data, colWidths=[3*inch, 3*inch])
-    sig_table.setStyle(TableStyle([
+    meta_table.setStyle(TableStyle([
         ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-        ('FONTSIZE', (0, 0), (-1, -1), 10),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
-        ('TOPPADDING', (0, 0), (-1, -1), 5),
+        ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#f5f5f7')),
+        ('BOX', (0, 0), (-1, -1), 0.75, colors.HexColor('#d2d2d7')),
+        ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#e8e8ed')),
+        ('TOPPADDING', (0, 0), (-1, -1), 8),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
     ]))
-    elements.append(sig_table)
-    
-    elements.append(Spacer(1, 0.3*inch))
-    
-    # Footer with logo
-    footer_style = ParagraphStyle(
-        'Footer',
-        parent=styles['Normal'],
-        fontSize=14,
-        textColor=colors.HexColor('#1a1a2e'),
-        alignment=TA_CENTER,
-        fontName='Helvetica-Bold'
-    )
-    elements.append(Paragraph("BopheloHub", footer_style))
-    elements.append(Paragraph("Empowering Lives Through Education", details_style))
-    
-    # Bottom decorative line
-    elements.append(Spacer(1, 0.2*inch))
-    elements.append(Line(6*inch, colors.HexColor('#e94560')))
-    
+    elements.append(meta_table)
+
+    def draw_certificate_frame(canvas, _doc):
+        canvas.saveState()
+        width, height = landscape(letter)
+        canvas.setStrokeColor(title_accent)
+        canvas.setLineWidth(1.5)
+        margin = 0.35 * inch
+        canvas.roundRect(
+            margin,
+            margin,
+            width - (2 * margin),
+            height - (2 * margin),
+            radius=12,
+            stroke=1,
+            fill=0,
+        )
+        canvas.setStrokeColor(colors.HexColor('#e8e8ed'))
+        canvas.setLineWidth(0.6)
+        canvas.line(margin + 0.12 * inch, height - 1.0 * inch, width - margin - 0.12 * inch, height - 1.0 * inch)
+        canvas.restoreState()
+
     # Build the PDF
-    doc.build(elements)
+    doc.build(elements, onFirstPage=draw_certificate_frame, onLaterPages=draw_certificate_frame)
     
     # Get the value of the BytesIO buffer and write it to the response
     pdf = buffer.getvalue()
