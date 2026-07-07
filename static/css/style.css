@@ -3221,3 +3221,38 @@ html {
     box-shadow: 0 0 0 3px var(--primary-subtle);
     border-radius: 4px;
 }
+
+/* ============================================ */
+/* Mobile Table Fixes - Prevent vertical text */
+/* ============================================ */
+@media (max-width: 768px) {
+    .table td,
+    .table th {
+        white-space: normal !important;
+        word-break: break-word;
+        padding: 0.5rem 0.75rem;
+    }
+
+    .table td small,
+    .table th small {
+        white-space: normal !important;
+        word-break: break-word;
+    }
+
+    .table .progress {
+        width: 100% !important;
+        min-width: 40px;
+    }
+
+    .table-responsive {
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+@media (max-width: 576px) {
+    .table td,
+    .table th {
+        padding: 0.4rem 0.6rem;
+        font-size: 0.875rem;
+    }
+}

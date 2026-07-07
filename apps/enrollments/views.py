@@ -1,12 +1,13 @@
+from collections import Counter
+from datetime import timedelta
+
 from django.views.generic import ListView, DetailView, CreateView
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Count, Avg, Q, F, FloatField
-from django.db.models.functions import Cast
+from django.db.models import Avg, Max
 from django.shortcuts import redirect, get_object_or_404
 from django.urls import reverse_lazy, reverse
 from django.utils import timezone
 from django.contrib import messages
-from datetime import timedelta
 from .models import Enrollment, LessonCompletion
 from courses.models import Course
 from certificates.models import Certificate
@@ -14,6 +15,71 @@ from notifications.models import Notification
 from payments.models import Payment
 from payments.forms import PaymentUploadForm
 from instructors.mixins import InstructorRequiredMixin
+from quizzes.models import UserQuizAttempt
+
+
+def _learning_activity_timestamps(user):
+    """Return all timestamps that count as learning activity."""
+    completion_dates = (
+        LessonCompletion.objects.filter(enrollment__user=user)
+        .values_list('completed_at', flat=True)
+    )
+    attempt_dates = (
+        UserQuizAttempt.objects.filter(user=user)
+        .values_list('attempted_at', flat=True)
+    )
+
+    return list(completion_dates) + list(attempt_dates)
+
+
+def _current_day_streak(activity_dates, anchor_date=None):
+    anchor_date = anchor_date or timezone.localdate()
+    if anchor_date not in activity_dates:
+        return 0
+
+    streak = 0
+    current_date = anchor_date
+    while current_date in activity_dates:
+        streak += 1
+        current_date -= timedelta(days=1)
+    return streak
+
+
+def _current_week_streak(activity_dates, anchor_date=None):
+    anchor_date = anchor_date or timezone.localdate()
+    active_weeks = {date.isocalendar()[:2] for date in activity_dates}
+    current_week = anchor_date.isocalendar()[:2]
+    if current_week not in active_weeks:
+        return 0
+
+    streak = 0
+    current_week_start = anchor_date - timedelta(days=anchor_date.weekday())
+    while current_week_start.isocalendar()[:2] in active_weeks:
+        streak += 1
+        current_week_start -= timedelta(days=7)
+    return streak
+
+
+def _weekly_activity(activity_timestamps, anchor_date=None):
+    anchor_date = anchor_date or timezone.localdate()
+    week_start = anchor_date - timedelta(days=anchor_date.weekday())
+    dates_in_week = [
+        week_start + timedelta(days=offset)
+        for offset in range(7)
+    ]
+    counts = Counter(
+        timezone.localdate(timestamp)
+        for timestamp in activity_timestamps
+        if week_start <= timezone.localdate(timestamp) <= week_start + timedelta(days=6)
+    )
+
+    return [
+        {
+            'day': date.strftime('%a'),
+            'count': counts.get(date, 0),
+        }
+        for date in dates_in_week
+    ]
 
 
 class StudentDashboardView(LoginRequiredMixin, ListView):
@@ -37,25 +103,27 @@ class StudentDashboardView(LoginRequiredMixin, ListView):
         context['certificates'] = Certificate.objects.filter(
             enrollment__user=self.request.user
         )
-        
+
         # Learning stats
-        context['streak_days'] = 0
+        activity_timestamps = _learning_activity_timestamps(self.request.user)
+        activity_dates = {timezone.localdate(timestamp) for timestamp in activity_timestamps}
+        context['daily_streak_days'] = _current_day_streak(activity_dates)
+        context['weekly_streak_weeks'] = _current_week_streak(activity_dates)
+        context['streak_days'] = context['daily_streak_days']
         context['lessons_completed'] = LessonCompletion.objects.filter(
             enrollment__user=self.request.user
         ).count()
-        context['total_hours'] = 0
-        context['avg_quiz_score'] = 0
-        
-        # Weekly activity (mock data)
-        context['weekly_activity'] = [
-            {'day': 'Mon', 'minutes': 0},
-            {'day': 'Tue', 'minutes': 0},
-            {'day': 'Wed', 'minutes': 0},
-            {'day': 'Thu', 'minutes': 0},
-            {'day': 'Fri', 'minutes': 0},
-            {'day': 'Sat', 'minutes': 0},
-            {'day': 'Sun', 'minutes': 0},
-        ]
+        context['avg_quiz_score'] = (
+            UserQuizAttempt.objects.filter(user=self.request.user)
+            .values('quiz_id')
+            .annotate(best_score=Max('score'))
+            .aggregate(avg_score=Avg('best_score'))
+            .get('avg_score')
+            or 0
+        )
+
+        # Weekly activity (real data)
+        context['weekly_activity'] = _weekly_activity(activity_timestamps)
         
         # Pending payments
         context['pending_payments'] = Payment.objects.filter(

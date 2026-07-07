@@ -289,7 +289,7 @@
                             <div class="d-flex justify-content-between align-items-end" style="height: 150px;">
                                 {% for day in weekly_activity %}
                                     <div class="text-center">
-                                        <div class="bg-primary rounded-top" style="width: 40px; height: {{ day.minutes|add:20 }}px; min-height: 10px;"></div>
+                                        <div class="bg-primary rounded-top" style="width: 40px; height: {{ day.count|add:20 }}px; min-height: 10px;"></div>
                                         <small class="text-muted d-block mt-1">{{ day.day }}</small>
                                     </div>
                                 {% endfor %}
@@ -301,22 +301,22 @@
                                 <div class="col-6">
                                     <div class="p-3 bg-light rounded text-center">
                                         <i class="bi bi-fire text-danger" style="font-size: 2rem;"></i>
-                                        <p class="mb-0 mt-2 fw-semibold">{{ streak_days }}</p>
-                                        <small class="text-muted">Day Streak</small>
+                                        <p class="mb-0 mt-2 fw-semibold">{{ daily_streak_days }}</p>
+                                        <small class="text-muted">Daily Streak</small>
                                     </div>
                                 </div>
                                 <div class="col-6">
                                     <div class="p-3 bg-light rounded text-center">
-                                        <i class="bi bi-bookmark text-primary" style="font-size: 2rem;"></i>
+                                        <i class="bi bi-calendar-week text-primary" style="font-size: 2rem;"></i>
+                                        <p class="mb-0 mt-2 fw-semibold">{{ weekly_streak_weeks }}</p>
+                                        <small class="text-muted">Weekly Streak</small>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="p-3 bg-light rounded text-center">
+                                        <i class="bi bi-bookmark text-success" style="font-size: 2rem;"></i>
                                         <p class="mb-0 mt-2 fw-semibold">{{ lessons_completed }}</p>
                                         <small class="text-muted">Lessons Done</small>
-                                    </div>
-                                </div>
-                                <div class="col-6">
-                                    <div class="p-3 bg-light rounded text-center">
-                                        <i class="bi bi-clock text-success" style="font-size: 2rem;"></i>
-                                        <p class="mb-0 mt-2 fw-semibold">{{ total_hours }}</p>
-                                        <small class="text-muted">Hours Learned</small>
                                     </div>
                                 </div>
                                 <div class="col-6">
